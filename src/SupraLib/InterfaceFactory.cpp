@@ -24,6 +24,7 @@
 #include "InputOutput/MetaImageOutputDevice.h"
 #include "InputOutput/RosImageOutputDevice.h"
 #include "InputOutput/UltrasoundInterfaceRawDataMock.h"
+#include "InputOutput/UsIntDemonstrator.h"
 #include "Beamformer/BeamformingNode.h"
 #include "Beamformer/IQDemodulatorNode.h"
 #include "Beamformer/LogCompressorNode.h"
@@ -96,6 +97,12 @@ namespace supra
 		if (deviceType == "UltrasoundInterfaceRawDataMock")
 		{
 			retVal = make_shared<UltrasoundInterfaceRawDataMock>(*pG, nodeID);
+		}
+#endif
+#ifdef HAVE_DEVICE_DEMONSTRATOR
+		if (deviceType == "UltrasoundInterfaceDemonstrator")
+		{
+			retVal = make_shared<UsIntDemonstrator>(*pG, nodeID);
 		}
 #endif
 

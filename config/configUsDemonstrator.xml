@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<supra_config>
+	<devices>
+		<inputs>
+			<input type="UltrasoundInterfaceDemonstrator" id="US-Ult">
+				
+			</input>
+		</inputs>
+		<outputs>
+			
+		</outputs>
+		<nodes>
+		</nodes>
+	</devices>
+	<connections>
+		
+	</connections>
+</supra_config>
