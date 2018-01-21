@@ -14,6 +14,7 @@
 
 #ifndef __CUDACC__
 #include <algorithm>
+#define cudaStreamPerThread 0
 #endif
 
 #include <memory>

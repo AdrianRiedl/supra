@@ -25,12 +25,14 @@
 #include <fstream>
 
 // should go to demonstrator class
+#define USDEMONSTRATOR_NUM_PINS (15)
 namespace supra
 {
 	class UsDemonstrator
 	{
 	public:
 		UsDemonstrator();
+		~UsDemonstrator();
 
 		struct TransmitBeam
 		{
@@ -47,9 +49,19 @@ namespace supra
 		void freeze();
 		void unfreeze();
 		void setCallback(std::function<void(const std::vector<std::vector<uint8_t>> &)> callback);
+		void setPulseFrequency(double pulseFrequency);
 
 	private:
+	    void setPinMode(int mode);
+		void transmitPulse(const TransmitBeam& beam);
+		static void delayUntil(unsigned int time);
+		// pin number on connector
+		// static constexpr uint8_t m_pins[USDEMONSTRATOR_NUM_PINS] = {3, 5, 7, 11, 13, 15, 19, 21, 23, 26, 29, 31, 33, 35, 37};
+		// with wiringPi numbering
+		static constexpr uint8_t m_pins[USDEMONSTRATOR_NUM_PINS] = {8, 9, 7,  0,  2,  3, 12, 13, 14, 11, 21, 22, 23, 24, 25};
+
 		size_t m_txClock;
+		unsigned int m_txSleepUs;
 		double m_pulseFrequency;
 
 		std::vector<Frame> m_frames;

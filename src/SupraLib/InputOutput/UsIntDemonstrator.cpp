@@ -21,18 +21,40 @@
 #include "utilities/utility.h"
 #include "utilities/CallFrequency.h"
 #include "utilities/Logging.h"
+#ifdef HAVE_WIRINGPI
+#include <wiringPi.h>
+#endif
 
 namespace supra
 {
 	UsDemonstrator::UsDemonstrator()
 		: m_txClock(1000)
-		, m_pulseFrequency(5)
+		, m_pulseFrequency(0.5)
 		, m_running(false)
 		, m_frozen(false)
 		, m_currentFrame(0)
 		, m_currentTransmit(0)
 	{
 		m_timer.setFrequency(m_pulseFrequency);
+		m_txSleepUs = static_cast<unsigned int>(1000000.0 / m_txClock);
+#ifdef HAVE_WIRINGPI
+		wiringPiSetup();
+		setPinMode(OUTPUT);
+		for(const uint8_t& pin : m_pins)
+		{
+			digitalWrite(pin, false);
+		}
+#endif
+	}
+
+	UsDemonstrator::~UsDemonstrator()
+	{
+		for(const uint8_t& pin : m_pins)
+		{
+			digitalWrite(pin, false);
+			pinMode(pin, INPUT);
+			pullUpDnControl(pin, PUD_DOWN) ;
+		}
 	}
 
 	void UsDemonstrator::addFrame(const Frame& frame)
@@ -66,17 +88,24 @@ namespace supra
 
 	void UsDemonstrator::executionLoop()
 	{
+#ifdef HAVE_WIRINGPI
+		piHiPri(90);
+#endif
 		while (m_running)
 		{
 			if(!m_frozen && m_frames.size() > 0)
 			{
 				std::lock_guard<std::mutex> lock(m_objMutex);
+#ifdef HAVE_WIRINGPI
+				// on Raspberry: Pulse!
+				transmitPulse(m_frames[m_currentFrame][m_currentTransmit]);
+#else
 				// publish the pulse image
 				if (m_callback)
 				{
 					m_callback(m_frames[m_currentFrame][m_currentTransmit].txWaves);
 				}
-				// on Raspberry: Pulse!
+#endif //HAVE_WIRINGPI
 				logging::log_info("UsDemonstrator loop. Frame ", m_currentFrame + 1, " / ", m_frames.size(), ", Transmit ",
 					m_currentTransmit + 1, " / ", m_frames[m_currentFrame].size());
 
@@ -112,6 +141,50 @@ namespace supra
 		std::lock_guard<std::mutex> lock(m_objMutex);
 		m_callback = callback;
 	}
+
+	void UsDemonstrator::setPulseFrequency(double pulseFrequency)
+	{
+		std::lock_guard<std::mutex> lock(m_objMutex);
+		m_pulseFrequency = pulseFrequency;
+		m_timer.setFrequency(m_pulseFrequency);
+	}
+
+	void UsDemonstrator::setPinMode(int mode)
+	{
+#ifdef HAVE_WIRINGPI
+		for (const uint8_t& pin : m_pins)
+		{
+			pinMode(pin, mode);
+		}
+#endif
+	}
+
+	void UsDemonstrator::transmitPulse(const TransmitBeam& beam)
+	{
+#ifdef HAVE_WIRINGPI
+		size_t numEntries = beam.txWaves[0].size();
+		size_t numElements = beam.txWaves.size();
+
+		unsigned int loopStart = micros();
+		for (size_t k = 0; k < numEntries; k++)
+		{
+			unsigned int microsIn = micros();
+			loopStart += m_txSleepUs;
+			for(size_t elem = 0; elem < numElements; elem++)
+			{
+				digitalWrite(m_pins[elem], beam.txWaves[elem][k]);
+			}
+			delayUntil(loopStart);
+		}
+#endif
+	}
+
+	void UsDemonstrator::delayUntil(unsigned int targetTime)
+	{
+		while (micros() <= targetTime) {};
+	};
+
+	constexpr uint8_t UsDemonstrator::m_pins[USDEMONSTRATOR_NUM_PINS];
 }
 
 namespace supra
@@ -142,7 +215,7 @@ namespace supra
 		//Setup allowed values for parameters
 		m_valueRangeDictionary.set<uint32_t>("systemTxClock", 100, 10000, 1000, "TX system clock (Hz)");
 		m_valueRangeDictionary.set<string>("probeName", {"LEDs", "Demonstrator"}, "LEDs", "Probe");
-		
+
 		m_valueRangeDictionary.set<double>("startDepth", 0.0, 300.0, 0.0, "Start depth [mm]");
 		m_valueRangeDictionary.set<double>("endDepth", 0.0, 300.0, 70.0, "End depth [mm]");
 		m_valueRangeDictionary.set<bool>("measureThroughput", {false, true}, false, "Measure throughput");
@@ -233,7 +306,7 @@ namespace supra
 		for (size_t numSeq = 0; numSeq < m_numBeamSequences; ++numSeq)
 		{
 			std::string idApp = getBeamSequenceApp(m_numBeamSequences,numSeq);
-			
+
 			// make nice string for GUI descriptors
 			std::string descApp;
 			if (m_numBeamSequences == 1)
@@ -270,7 +343,7 @@ namespace supra
 			m_valueRangeDictionary.set<uint32_t>(idApp+"txApertureSizeX", 0, 384, 0, descApp+"TX Aperture X");
 			m_valueRangeDictionary.set<uint32_t>(idApp+"txApertureSizeY", 0, 384, 0, descApp+"TX Aperture Y");
 			m_valueRangeDictionary.set<string>(idApp+"txWindowType", {"Rectangular", "Hann", "Hamming","Gauss"}, "Rectangular", descApp+"TX apodization");
-			m_valueRangeDictionary.set<double>(idApp+"txWindowParameter", 0.0, 10.0, 0.0, descApp+"TxWindow parameter");			
+			m_valueRangeDictionary.set<double>(idApp+"txWindowParameter", 0.0, 10.0, 0.0, descApp+"TxWindow parameter");
 			m_valueRangeDictionary.set<bool>(idApp+"txFocusActive", {false, true}, true, descApp+"TX focus");
 			m_valueRangeDictionary.set<double>(idApp+"txFocusDepth", 0.0, 300.0, 50.0, descApp+"Focus depth [mm]");
 			m_valueRangeDictionary.set<double>(idApp+"txFocusWidth", 0.0, 20.0, 0.0, descApp+"Focus width [mm]");
@@ -293,16 +366,16 @@ namespace supra
 			double probePitch = 20;
 			m_pTransducer = unique_ptr<USTransducer>(
 					new USTransducer(
-							15,
-							vec2s{15,1},
+							USDEMONSTRATOR_NUM_PINS,
+							vec2s{USDEMONSTRATOR_NUM_PINS,1},
 							USTransducer::Linear,
-							vector<double>(15 - 1, probePitch),
+							vector<double>(USDEMONSTRATOR_NUM_PINS - 1, probePitch),
 							vector<double>(0),
 							vector<std::pair<double, double> >{}));
 
-			maxAperture = {15,1};
+			maxAperture = {USDEMONSTRATOR_NUM_PINS,1};
 
-			
+
 		} 
 		else if (m_probeName == "Demonstrator")
 		{
@@ -310,18 +383,18 @@ namespace supra
 			double probePitch = 13;
 			m_pTransducer = unique_ptr<USTransducer>(
 					new USTransducer(
-							15,
-							vec2s{15,1},
+							USDEMONSTRATOR_NUM_PINS,
+							vec2s{USDEMONSTRATOR_NUM_PINS,1},
 							USTransducer::Linear,
-							vector<double>(15 - 1, probePitch),
+							vector<double>(USDEMONSTRATOR_NUM_PINS - 1, probePitch),
 							vector<double>(0),
 							vector<std::pair<double, double> >{})
 						);
 
-			maxAperture = {15,1};
+			maxAperture = {USDEMONSTRATOR_NUM_PINS,1};
 
 		}
-		m_numMuxedChannels = 15;
+		m_numMuxedChannels = USDEMONSTRATOR_NUM_PINS;
 
 		// we have a single "m_numMuxedChannels" channel system without muxing
 		m_probeElementsToMuxedChannelIndices.resize(m_numMuxedChannels);
@@ -339,7 +412,7 @@ namespace supra
 		{
 			// TODO: support steering also in y
 			size_t numAnglesSeq = m_pSequencer->getNumAngles(numSeq).x;
-			
+
 			for (size_t angleSeq = 0; angleSeq < numAnglesSeq; ++angleSeq)
 			{
 				std::shared_ptr<Beamformer> bf = m_pSequencer->getBeamformer(numSeq,angleSeq);
@@ -376,7 +449,7 @@ namespace supra
 	//	// iterate over all defined beam sequences, each beam-sequ defines one USImageProperties object
 	//	for (size_t numSeq = 0; numSeq < m_numBeamSequences; ++numSeq)
 	//	{
-	//		
+	//
 
 	//		std::shared_ptr<const Beamformer> bf = m_pSequencer->getBeamformer(numSeq);
 	//		std::shared_ptr<const USImageProperties> imageProps = m_pSequencer->getUSImgProperties(numSeq);
@@ -408,7 +481,7 @@ namespace supra
 
 	//		// Defines the type of transducer
 	//		if (m_probeName == "Linear" || m_probeName == "CPLA12875" || m_probeName == "CPLA06475") {
-	//			newProps->setTransducerType(USImageProperties::TransducerType::Linear);	
+	//			newProps->setTransducerType(USImageProperties::TransducerType::Linear);
 	//		} else if (m_probeName == "2D") {
 	//			newProps->setTransducerType(USImageProperties::TransducerType::Bicurved);
 	//		}
@@ -483,16 +556,16 @@ namespace supra
 		m_interface->setCallback([this](const std::vector<std::vector<uint8_t> >& im) { putData(im); });
 		//Step 1 ------------------ "Setup Platform"
 		//m_cPlatformHandle = setupPlatform();
-	
-		//checkOptions();	
-	
+
+		//checkOptions();
+
 		//m_cUSEngine = unique_ptr<USEngine>(new USEngine(*m_cPlatformHandle));
 		//m_cUSEngine->stop();
 		//m_cUSEngine->setBlocking(false);
 
 		//Step 2 ----------------- "Create Scan Definition"
 		setupScan();
-		
+
 		//Step 3 ----------------- "Create Ultrasound Engine Thread"
 		//create the data processor that later handles the data
 		/*m_pDataProcessor = unique_ptr<UsIntDemonstratorProc>(
@@ -516,7 +589,7 @@ namespace supra
 
 		m_ready = true;
 	}
-	
+
 	std::vector<uint8_t> UsIntDemonstrator::createWeightedWaveform(
 		const BeamEnsembleTxParameters& txParams, size_t numTotalEntries, float weight, size_t delaySamples, size_t maxDelaySamples, uint8_t csTxOversample)
 	{
@@ -604,7 +677,7 @@ namespace supra
 			{
 				std::shared_ptr<Beamformer> bf = m_pSequencer->getBeamformer(numSeq, angleSeq);
 				std::string seqIdApp = getBeamSequenceApp(m_numBeamSequences,numSeq);
-				
+
 				// scan or image-specific configuration values
 				std::string scanType = m_configurationDictionary.get<std::string>(seqIdApp+"scanType");
 				bf->setScanType(scanType);
@@ -643,15 +716,15 @@ namespace supra
 				txApertureSize.x = m_configurationDictionary.get<uint32_t>(seqIdApp+"txApertureSizeX");
 				txApertureSize.y = m_configurationDictionary.get<uint32_t>(seqIdApp+"txApertureSizeY");
 				bf->setTxMaxApertureSize(txApertureSize);
-				
+
 				string windowType = m_configurationDictionary.get<string>(seqIdApp+"txWindowType");
 				bf->setTxWindowType(windowType);
 
 				double winParam = m_configurationDictionary.get<double>("txWindowParameter");
 				bf->setWindowParameter(winParam);
-				
-				
-				
+
+
+
 				// Todo: support steering also in y
 				m_pSequencer->setNumAngles(numSeq, {m_configurationDictionary.get<uint32_t>(seqIdApp+"steerNumAnglesX"), 1});
 				m_pSequencer->setStartAngle(numSeq, { m_configurationDictionary.get<double>(seqIdApp+"steerAngleStartX"), 0.0 });
@@ -666,7 +739,7 @@ namespace supra
 				m_beamEnsembleTxParameters.at(numSeq).txNumCyclesManual = m_configurationDictionary.get<uint32_t>(seqIdApp+"txNumCyclesManual");
 			}
 		}
-		
+
 		updateTransducer();
 
 		for (size_t numSeq = 0; numSeq < m_numBeamSequences; ++numSeq)
@@ -694,7 +767,7 @@ namespace supra
 		// settings which can be changed online
 		if(m_ready)
 		{
-			
+
 		}
 
 		//these properties require large reconfigurations. for now allow them only before initialization
@@ -832,7 +905,7 @@ namespace supra
 
 	void UsIntDemonstrator::createSequence()
 	{
-		
+
 		for (size_t numSeq = 0; numSeq < m_numBeamSequences; ++numSeq)
 		{
 			// TODO: support steering also in y
@@ -842,7 +915,7 @@ namespace supra
 			{
 				std::shared_ptr<Beamformer> bf = m_pSequencer->getBeamformer(numSeq,angleSeq);
 				std::shared_ptr<USImageProperties> props = m_pSequencer->getUSImgProperties(numSeq,angleSeq);
-	
+
 				// push rx parameters to US properties
 				props->setScanlineInfo(bf->getRxParameters());
 
@@ -850,7 +923,7 @@ namespace supra
 				const std::vector<ScanlineTxParameters3D>* beamTxParams = bf->getTxParameters();
 
 				std::pair<size_t, UsDemonstrator::Frame> fdef = createFrame(beamTxParams, props, m_beamEnsembleTxParameters.at(numSeq));
-											
+
 				// store framedef and add it to Cephasonics interface
 				m_pFrameMap[fdef.first] = std::pair<size_t,size_t>(numSeq,angleSeq);
 				m_pFrameDefs.push_back(fdef.second);
@@ -907,7 +980,7 @@ namespace supra
 				static_cast<double>(m_systemTxClock) /
 				(txEnsembleParameters.txFrequency)
 				)/2);
-				
+
 		// find maximum delay
 		double maxDelay = 0;
 		for (auto& delayVect : txParameters.delays)
@@ -956,7 +1029,7 @@ namespace supra
 					// -> convert from seconds to TX_Clock
 					size_t txDelaySamples  = static_cast<size_t>(round(
 						txParameters.delays[localElementIdxX][localElementIdxY]*static_cast<double>(m_systemTxClock))); // from seconds to samples
-					
+
 					float txWeight = static_cast<float>(txParameters.weights[localElementIdxX][localElementIdxY]);
 					txWaves[muxedChanIdx] = createWeightedWaveform(txEnsembleParameters, numTotalEntries, txWeight, txDelaySamples, maxDelaySamples, 1);
 				}

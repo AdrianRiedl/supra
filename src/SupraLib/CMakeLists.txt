@@ -1,6 +1,8 @@
 CMAKE_MINIMUM_REQUIRED( VERSION 3.0.0 FATAL_ERROR )
 MESSAGE(STATUS "Building SUPRA_Lib")
 
+include(CheckIncludeFile)
+
 SET(SUPRA_Lib_DEFINES)
 IF(WIN32)
 	# In some places we need to use insecure iterators. Let visual studio not warn about that
@@ -62,7 +64,7 @@ IF(SUPRA_DEVICE_DEMONSTRATOR)
 	SET(SUPRA_Lib_DEFINES ${SUPRA_Lib_DEFINES} HAVE_DEVICE_DEMONSTRATOR)
 ENDIF(SUPRA_DEVICE_DEMONSTRATOR)
 
-IF(SUPRA_BEAMFORMER)
+IF(SUPRA_RX_BEAMFORMER)
 	include(supraIncludeCuda)
 	set(CUDA_SEPARABLE_COMPILATION ON)
 	MESSAGE(STATUS "Found Cuda Version " ${CUDA_VERSION_STRING})
@@ -80,7 +82,7 @@ IF(SUPRA_BEAMFORMER)
 		HAVE_CUDA)
 	SET(SUPRA_Lib_INCLUDEDIRS ${SUPRA_Lib_INCLUDEDIRS}
 		${CUDA_INCLUDE_DIRS})
-ENDIF(SUPRA_BEAMFORMER)
+ENDIF(SUPRA_RX_BEAMFORMER)
 
 #find IGTL Interface
 IF(SUPRA_DEVICE_IGTL_OUTPUT OR SUPRA_DEVICE_TRACKING_IGTL)
@@ -179,13 +181,24 @@ ENDIF(ROS_FOUND)
 	
 ############################################
 #Lib modules
-IF(SUPRA_BEAMFORMER)
+IF(SUPRA_TX_BEAMFORMER)
 	SET(SUPRA_Lib_SOURCE ${SUPRA_Lib_SOURCE}
 		Beamformer/Sequencer.cpp
 		Beamformer/Beamformer.cpp
 		Beamformer/RxBeamformerParameters.cpp
 		Beamformer/WindowFunction.cpp
-		Beamformer/USTransducer.cpp
+		Beamformer/USTransducer.cpp)
+	SET(SUPRA_Lib_HEADERS ${SUPRA_Lib_HEADERS}
+		Beamformer/Sequencer.h
+		Beamformer/Beamformer.h
+		Beamformer/RxBeamformerParameters.h
+		Beamformer/WindowFunction.h
+		Beamformer/USTransducer.h)
+	SET(SUPRA_Lib_DEFINES ${SUPRA_Lib_DEFINES}
+		HAVE_TX_BEAMFORMER)
+ENDIF(SUPRA_TX_BEAMFORMER)
+IF(SUPRA_BEAMFORMER)
+	SET(SUPRA_Lib_SOURCE ${SUPRA_Lib_SOURCE}
 		Beamformer/BeamformingNode.cpp
 		Beamformer/IQDemodulatorNode.cpp
 		Beamformer/LogCompressorNode.cpp
@@ -199,16 +212,11 @@ IF(SUPRA_BEAMFORMER)
 		Beamformer/ScanConverter.cu
 		Beamformer/TemporalFilter.cu)
 	SET(SUPRA_Lib_HEADERS ${SUPRA_Lib_HEADERS}
-		Beamformer/Sequencer.h
-		Beamformer/Beamformer.h
 		Beamformer/RxBeamformerCuda.h
 		Beamformer/RxBeamformerCommon.h
 		Beamformer/RxSampleBeamformerDelayAndSum.h
 		Beamformer/RxSampleBeamformerDelayAndStdDev.h
 		Beamformer/RxSampleBeamformerTestSignal.h
-		Beamformer/RxBeamformerParameters.h
-		Beamformer/WindowFunction.h
-		Beamformer/USTransducer.h
 		Beamformer/BeamformingNode.h
 		Beamformer/IQDemodulator.h
 		Beamformer/IQDemodulatorNode.h
@@ -326,6 +334,13 @@ IF(SUPRA_DEVICE_DEMONSTRATOR)
 		InputOutput/UsIntDemonstrator.cpp)
 	SET(SUPRA_Lib_HEADERS ${SUPRA_Lib_HEADERS}
 		InputOutput/UsIntDemonstrator.h)
+	IF(EXISTS "/usr/include/wiringPi.h")
+		SET(SUPRA_Lib_DEFINES ${SUPRA_Lib_DEFINES}
+			HAVE_WIRINGPI)
+		SET(SUPRA_Lib_LIBRARIES ${SUPRA_Lib_LIBRARIES}
+			wiringPi)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+	ENDIF()
 ENDIF()
 IF(SUPRA_DEVICE_ITK_FILE_OUT)
 	SET(SUPRA_Lib_SOURCE ${SUPRA_Lib_SOURCE}
