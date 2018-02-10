@@ -99,13 +99,14 @@ namespace supra
 #ifdef HAVE_WIRINGPI
 				// on Raspberry: Pulse!
 				transmitPulse(m_frames[m_currentFrame][m_currentTransmit]);
-#else
+//#else
+#endif //HAVE_WIRINGPI
 				// publish the pulse image
 				if (m_callback)
 				{
 					m_callback(m_frames[m_currentFrame][m_currentTransmit].txWaves);
 				}
-#endif //HAVE_WIRINGPI
+//#endif //HAVE_WIRINGPI
 				logging::log_info("UsDemonstrator loop. Frame ", m_currentFrame + 1, " / ", m_frames.size(), ", Transmit ",
 					m_currentTransmit + 1, " / ", m_frames[m_currentFrame].size());
 
@@ -219,7 +220,7 @@ namespace supra
 		m_valueRangeDictionary.set<double>("startDepth", 0.0, 300.0, 0.0, "Start depth [mm]");
 		m_valueRangeDictionary.set<double>("endDepth", 0.0, 300.0, 70.0, "End depth [mm]");
 		m_valueRangeDictionary.set<bool>("measureThroughput", {false, true}, false, "Measure throughput");
-		m_valueRangeDictionary.set<double>("speedOfSound", 1000, 3000, 0.3580, "Speed of sound [m/s]"); // Default value: for 100 Hz waves
+		m_valueRangeDictionary.set<double>("speedOfSound", 0.001, 10, 0.284, "Speed of sound [m/s]"); // Default value: for 100 Hz waves
 		// with f = 100Hz
 		// c = 0.3580 m / s
 		// lambda = 0.0036 m
@@ -380,7 +381,7 @@ namespace supra
 		else if (m_probeName == "Demonstrator")
 		{
 			// Linear array with 64 elements
-			double probePitch = 13;
+			double probePitch = 15.24;
 			m_pTransducer = unique_ptr<USTransducer>(
 					new USTransducer(
 							USDEMONSTRATOR_NUM_PINS,

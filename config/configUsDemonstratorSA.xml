@@ -6,11 +6,14 @@
 				<param type="double" name="txFrequency">
 					50
 				</param>
-				<param type="double" name="txFocusDepth">
-					100
+				<param type="size_t" name="txApertureSizeX">
+					1
+				</param>
+				<param type="size_t" name="txApertureSizeY">
+					1
 				</param>
 				<param type="uint32_t" name="numScanlinesX">
-					3
+					7
 				</param>
 				<param type="uint32_t" name="numScanlinesY">
 					1

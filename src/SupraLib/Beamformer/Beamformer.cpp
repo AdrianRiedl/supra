@@ -425,7 +425,11 @@ namespace supra
 				{
 					// the position of the scanline on the x axis
 					double scanlinePosition = firstElement.x +
-						static_cast<double>(scanlineIdx) / (numScanlines - 1) * (lastElement.x - firstElement.x);
+						static_cast<double>(scanlineIdx+2) / (numScanlines + 3) * (lastElement.x - firstElement.x);
+					//if (numScanlines == 1)
+					//{
+						
+					//}
 					
 					// the scanline position in terms of elementIndices
 					double scanlinePositionRelative = static_cast<double>(scanlineIdx) / (numScanlines - 1) * (m_pTransducer->getNumElements() - 1);

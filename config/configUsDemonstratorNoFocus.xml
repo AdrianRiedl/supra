@@ -6,14 +6,8 @@
 				<param type="double" name="txFrequency">
 					50
 				</param>
-				<param type="double" name="txFocusDepth">
-					100
-				</param>
-				<param type="uint32_t" name="numScanlinesX">
-					3
-				</param>
-				<param type="uint32_t" name="numScanlinesY">
-					1
+				<param type="bool" name="txFocusActive">
+					0
 				</param>
 			</input>
 		</inputs>
