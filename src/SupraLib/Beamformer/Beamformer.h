@@ -66,6 +66,8 @@ namespace supra
 
 		void setTransducer(const USTransducer* transducer);
 
+		void setTxActiveTransducer(const uint32_t transducerIndex);
+
 		void setScanType(const std::string scanType);
 
 		/// active and deactivate receival for beamformer
@@ -120,7 +122,7 @@ namespace supra
 		/// Set number or discrete receive focus steps to be calculated
 		void setNumDepths(const size_t numDepths);
 
-
+		uint32_t getTxActiveTranducer() const;
 		std::string getScanType() const;
 		bool getRxModeActive() const;
 		double getSpeedOfSound() const;
@@ -181,6 +183,7 @@ namespace supra
 		const USTransducer* m_pTransducer;
 
 		// Imaging parameters
+		uint32_t m_txActiveTransducer;
 		ScanType m_type;
 		bool m_disableRx;
 		bool m_correctMatchingLayers;

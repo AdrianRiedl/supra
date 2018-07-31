@@ -55,6 +55,7 @@
 #include <set>
 
 #include "USImage.h"
+#include "SyncRecordObject.h"
 #include "Beamformer/USRawData.h"
 #include "Beamformer/Sequencer.h"
 #include "Beamformer/USTransducer.h"
@@ -145,7 +146,7 @@ namespace supra
 
 	UsIntCephasonicsCc::UsIntCephasonicsCc(tbb::flow::graph & graph, const std::string& nodeID, const size_t numPorts)
 		: AbstractInput(graph, nodeID, numPorts)
-		, m_pTransducer(nullptr)
+		, m_pTransducers(2)
 		, m_pSequencer(nullptr)
 		, m_pProbe(nullptr)
 		, m_cUSEngine(nullptr)
@@ -159,6 +160,8 @@ namespace supra
 		, m_numDroppedFrames(0)
 		, m_lastFrameNumber(1)
 		, m_sequenceNumFrames(0)
+		, m_probeNames(2)
+		, m_numProbes(1)
 	{
 		m_callFrequency.setName("CepUS");
 
@@ -181,7 +184,8 @@ namespace supra
 
 		//Setup allowed values for parameters
 		m_valueRangeDictionary.set<uint32_t>("systemTxClock", {40, 20}, 40, "TX system clock (MHz)");
-		m_valueRangeDictionary.set<string>("probeName", {"Linear", "2D", "CPLA12875", "CPLA06475"}, "Linear", "Probe");
+		m_valueRangeDictionary.set<string>("probeName", {"Linear", "2D", "CPLA12875", "CPLA06475", "SingleElement"}, "Linear", "Probe");
+		m_valueRangeDictionary.set<string>("probeName_2", {"-", "Linear", "2D", "CPLA12875", "CPLA06475", "SingleElement"}, "Linear", "Probe 2");
 		
 		m_valueRangeDictionary.set<double>("startDepth", 0.0, 300.0, 0.0, "Start depth [mm]");
 		m_valueRangeDictionary.set<double>("endDepth", 0.0, 300.0, 70.0, "End depth [mm]");
@@ -256,6 +260,7 @@ namespace supra
 				// remove old keys
 				std::string idApp = getBeamSequenceApp(oldBeamSequenceValueRange,numSeq);
 
+				m_valueRangeDictionary.remove(idApp+"txTransducer");
 				m_valueRangeDictionary.remove(idApp+"scanType");
 				m_valueRangeDictionary.remove(idApp+"rxModeActive");
 				m_valueRangeDictionary.remove(idApp+"txVoltage");
@@ -305,6 +310,7 @@ namespace supra
 			}
 
 			// overall scan type for sequence
+			m_valueRangeDictionary.set<uint32_t>(idApp+"txTransducer", 0, 1, 0, descApp+"Active transducer");
 			m_valueRangeDictionary.set<string>(idApp+"scanType", {"linear", "phased", "biphased", "planewave"}, "linear", descApp+"Scan Type");
 			m_valueRangeDictionary.set<bool>(idApp+"rxModeActive", {false, true}, true, descApp+"Activate Rx mode");
 
@@ -411,12 +417,35 @@ namespace supra
 		}
 	}
 
-	void UsIntCephasonicsCc::updateTransducer() {
+	void UsIntCephasonicsCc::updateTransducers()
+	{
+		if(m_probeNames[1] != "-")
+		{
+			m_numProbes = 2;
+		}
+		else
+		{
+			m_numProbes = 1;
+		}
+
+		m_pTransducers.resize(m_numProbes);
+		m_probeElementsToMuxedChannelIndices.resize(m_numProbes);
+		//m_rxPlatformsToCopy.resize(m_numProbes);
+		m_rxPlatformCopyOffset.resize(m_numProbes);
+		//m_rxNumPlatformsToCopy.resize(m_numProbes);
+
+		for (size_t probeIndex = 0; probeIndex < m_numProbes; probeIndex++)
+		{
+			updateTransducer(probeIndex);
+		}
+	}
+
+	void UsIntCephasonicsCc::updateTransducer(size_t transducerIndex) {
 		//create new transducer
 		vec2s maxAperture{0,0};
-		if (m_probeName == "Linear" || m_probeName == "CPLA12875") {
+		if (m_probeNames[transducerIndex] == "Linear" || m_probeNames[transducerIndex] == "CPLA12875") {
 			double probePitch = 0.295275591; // From Cephasonics xscan file
-			m_pTransducer = unique_ptr<USTransducer>(
+			m_pTransducers[transducerIndex] = unique_ptr<USTransducer>(
 					new USTransducer(
 							128,
 							vec2s{128,1},
@@ -430,47 +459,47 @@ namespace supra
 			if (m_numMuxedChannels == 64 && m_numChannelsTotal == 64)
 			{
 				// we have a single 64 channel system without muxing
-				m_probeElementsToMuxedChannelIndices.resize(64);
+				m_probeElementsToMuxedChannelIndices[transducerIndex].resize(64);
 				
 				for(size_t probeElem = 0; probeElem < 64; probeElem++)
 				{
-					m_probeElementsToMuxedChannelIndices[probeElem] = probeElem;
+					m_probeElementsToMuxedChannelIndices[transducerIndex][probeElem] = probeElem;
 				}
 			}
 			else if ((m_numMuxedChannels == 192 || m_numMuxedChannels == 128) && m_numChannelsTotal == 64)
 			{
 				// 64 channel system which allows for full realtime imaging of 128 element probe
-				m_probeElementsToMuxedChannelIndices.resize(128);
+				m_probeElementsToMuxedChannelIndices[transducerIndex].resize(128);
 
 				// Linear transducer is expected to be at platform 0
 				// and it uses the first 2 mux switches from each element
 				for(size_t probeElem = 0; probeElem < 128; probeElem++)
 				{
-					m_probeElementsToMuxedChannelIndices[probeElem] = probeElem;
+					m_probeElementsToMuxedChannelIndices[transducerIndex][probeElem] = probeElem;
 				}
 			}
 			else if (m_numMuxedChannels == 1152 && m_numChannelsTotal == 384)
 			{
 				// 384 channel system which allows for full realtime imaging of 128 element probe
-				m_probeElementsToMuxedChannelIndices.resize(128);
+				m_probeElementsToMuxedChannelIndices[transducerIndex].resize(128);
 
 				// Linear transducer is expected to be at platform 2, that is at connector C
 				// and it uses the first 2 mux switches from each element
 				for(size_t probeElem = 0; probeElem < 64; probeElem++)
 				{
-					m_probeElementsToMuxedChannelIndices[probeElem] = probeElem + 128;
+					m_probeElementsToMuxedChannelIndices[transducerIndex][probeElem] = probeElem + 128;
 				}
 				for(size_t probeElem = 64; probeElem < 128; probeElem++)
 				{
-					m_probeElementsToMuxedChannelIndices[probeElem] = probeElem + 64 + 384;
+					m_probeElementsToMuxedChannelIndices[transducerIndex][probeElem] = probeElem + 64 + 384;
 				}
 			}
 		} 
-		else if (m_probeName == "CPLA06475")
+		else if (m_probeNames[transducerIndex] == "CPLA06475")
 		{
 			// Linear array with 64 elements
 			double probePitch = 0.295275591; // From Cephasonics xscan file
-			m_pTransducer = unique_ptr<USTransducer>(
+			m_pTransducers[transducerIndex] = unique_ptr<USTransducer>(
 					new USTransducer(
 							64,
 							vec2s{64,1},
@@ -485,11 +514,11 @@ namespace supra
 			if (m_numMuxedChannels == 64 && m_numChannelsTotal == 64)
 			{
 				// we have a single 64 channel system without muxing
-				m_probeElementsToMuxedChannelIndices.resize(64);
+				m_probeElementsToMuxedChannelIndices[transducerIndex].resize(64);
 				
 				for(size_t probeElem = 0; probeElem < 64; probeElem++)
 				{
-					m_probeElementsToMuxedChannelIndices[probeElem] = probeElem;
+					m_probeElementsToMuxedChannelIndices[transducerIndex][probeElem] = probeElem;
 				}
 			}
 			else if (m_numMuxedChannels == 192 && m_numChannelsTotal == 64)
@@ -501,9 +530,9 @@ namespace supra
 				log_error("UsIntCephasonicsCc: 64 element array not yet supported in 384 channel system.");
 			}
 		} 
-		else if (m_probeName == "2D") {
+		else if (m_probeNames[transducerIndex] == "2D") {
 			double probePitch = 0.3; // From Vermon specification
-			m_pTransducer = unique_ptr<USTransducer>(
+			m_pTransducers[transducerIndex] = unique_ptr<USTransducer>(
 					new USTransducer(
 							1024,
 							vec2s{32,32},
@@ -520,16 +549,46 @@ namespace supra
 							}));
 
 			maxAperture = {32,12};
-			m_probeElementsToMuxedChannelIndices.resize(1024);
+			m_probeElementsToMuxedChannelIndices[transducerIndex].resize(1024);
 
 			// The 2D array uses the element in contiguous order. Nothing to see here.
 			for(size_t probeElem = 0; probeElem < 1024; probeElem++)
 			{
-				m_probeElementsToMuxedChannelIndices[probeElem] = probeElem;
+				m_probeElementsToMuxedChannelIndices[transducerIndex][probeElem] = probeElem;
+			}
+		}
+		else if (m_probeNames[transducerIndex] == "SingleElement")
+		{
+			m_pTransducers[transducerIndex] = unique_ptr<USTransducer>(
+					new USTransducer(
+							1,
+							vec2s{1,1},
+							USTransducer::Linear,
+							{},
+							{}));
+
+			maxAperture = {1,1};
+
+			if ((m_numMuxedChannels == 192 || m_numMuxedChannels == 128 || m_numMuxedChannels == 64) && m_numChannelsTotal == 64)
+			{
+				// 64 channel system which allows for full realtime imaging of 128 element probe
+				m_probeElementsToMuxedChannelIndices[transducerIndex].resize(1);
+
+				// Single element transducer is expected to be at platform 0
+				m_probeElementsToMuxedChannelIndices[transducerIndex][0] = 2;
+			}
+			else if (m_numMuxedChannels == 1152 && m_numChannelsTotal == 384)
+			{
+				// 384 channel system which allows for full realtime imaging of 128 element probe
+				m_probeElementsToMuxedChannelIndices[transducerIndex].resize(1);
+
+				// Single element transducer is expected to be at platform 5, that is at connector F
+				// and it uses the first mux switch
+				m_probeElementsToMuxedChannelIndices[transducerIndex][0] = 2 + 320;
 			}
 		}
 
-		m_pSequencer->setTransducer(m_pTransducer.get());
+		m_pSequencer->setTransducer(m_pTransducers[transducerIndex].get());
 
 
 		// TODO: currently all beamformers share same aperture
@@ -609,9 +668,11 @@ namespace supra
 			/* imageProps->setImageResolution(double resolution);  			// the resolution of the scanConverted image */
 
 			// Defines the type of transducer
-			if (m_probeName == "Linear" || m_probeName == "CPLA12875" || m_probeName == "CPLA06475") {
+			if (m_probeNames[bf->getTxActiveTranducer()] == "Linear" ||
+					m_probeNames[bf->getTxActiveTranducer()] == "CPLA12875" ||
+					m_probeNames[bf->getTxActiveTranducer()] == "CPLA06475") {
 				newProps->setTransducerType(USImageProperties::TransducerType::Linear);	
-			} else if (m_probeName == "2D") {
+			} else if (m_probeNames[bf->getTxActiveTranducer()] == "2D") {
 				newProps->setTransducerType(USImageProperties::TransducerType::Bicurved);
 			}
 
@@ -661,7 +722,8 @@ namespace supra
 
 			//publish system-wide parameter settings to properties object
 			newProps->setSpecificParameter("UsIntCepCc.systemTxClock", m_systemTxClock);
-			newProps->setSpecificParameter("UsIntCepCc.probeName", m_probeName);
+			newProps->setSpecificParameter("UsIntCepCc.probeName", m_probeNames[0]);
+			newProps->setSpecificParameter("UsIntCepCc.probeName2", m_probeNames[1]);
 			newProps->setSpecificParameter("UsIntCepCc.startDepth", m_startDepth);
 			newProps->setSpecificParameter("UsIntCepCc.endDepth", m_endDepth);
 			newProps->setSpecificParameter("UsIntCepCc.processorMeasureThroughput", m_processorMeasureThroughput);
@@ -690,7 +752,8 @@ namespace supra
 	
 		m_cUSEngine = unique_ptr<USEngine>(new USEngine(*m_cPlatformHandle));
 		m_cUSEngine->stop();
-		m_cUSEngine->setBlocking(false);
+//		m_cUSEngine->setBlocking(false);
+		m_cUSEngine->setBlocking(true);
 
 		//Step 2 ----------------- "Create Scan Definition"
 		setupScan();
@@ -826,7 +889,8 @@ namespace supra
 	{
 		// update systemwide configuration values
 		m_systemTxClock = m_configurationDictionary.get<uint32_t>("systemTxClock");
-		m_probeName = m_configurationDictionary.get<string>("probeName");
+		m_probeNames[0] = m_configurationDictionary.get<string>("probeName");
+		m_probeNames[1] = m_configurationDictionary.get<string>("probeName_2");
 		m_startDepth = m_configurationDictionary.get<double>("startDepth");
 		m_endDepth = m_configurationDictionary.get<double>("endDepth");
 		m_processorMeasureThroughput= m_configurationDictionary.get<bool>("measureThroughput");
@@ -844,6 +908,7 @@ namespace supra
 			std::string seqIdApp = getBeamSequenceApp(m_numBeamSequences,numSeq);
 			
 			// scan or image-specific configuration values
+			bf->setTxActiveTransducer(m_configurationDictionary.get<uint32_t>(seqIdApp+"txActiveTransducer"));
 			std::string scanType = m_configurationDictionary.get<std::string>(seqIdApp+"scanType");
 			bf->setScanType(scanType);
 
@@ -933,7 +998,7 @@ namespace supra
 		m_lowNoiseAmplifierGain = m_configurationDictionary.get<double>("lowNoiseAmplifierGain");
 		m_inputImpedance = m_configurationDictionary.get<double>("inputImpedance");
 
-		updateTransducer();
+		updateTransducers();
 
 		for (size_t numSeq = 0; numSeq < m_numBeamSequences; ++numSeq)
 		{
@@ -1233,7 +1298,7 @@ namespace supra
 	void UsIntCephasonicsCc::setupScan()
 	{
 		//create new transducer
-		updateTransducer();
+		updateTransducers();
 		setupCsProbe();
 
 		bool swModeEn = true;                      //need to set this to true when making fully-custom beams
@@ -1365,7 +1430,7 @@ namespace supra
 			const std::vector<ScanlineTxParameters3D>* beamTxParams = bf->getTxParameters();
 			bool disableRx = !bf->getRxModeActive();
 
-			std::pair<size_t, const cs::FrameDef*> fdef = createFrame(beamTxParams, props, m_beamEnsembleTxParameters.at(numSeq), disableRx);
+			std::pair<size_t, const cs::FrameDef*> fdef = createFrame(beamTxParams, props, m_beamEnsembleTxParameters.at(numSeq), disableRx, bf->getTxActiveTranducer());
 										
 			// store framedef and add it to Cephasonics interface
 			m_pFrameMap[fdef.first] = m_sequenceNumFrames;
@@ -1383,7 +1448,8 @@ namespace supra
 		const std::vector<ScanlineTxParameters3D>* txBeamParams, 
 		const std::shared_ptr<USImageProperties> imageProps, 
 		const BeamEnsembleTxParameters& txEnsembleParams,
-		const bool disableRx)
+		const bool disableRx,
+		uint32_t transducer)
 	{
 
 		// publish Rx Scanline parameters together with the RawData
@@ -1397,7 +1463,7 @@ namespace supra
 		for(auto txParams: *txBeamParams)
 		{
 			// create the beam ensemble for this txBeam
-			const BeamEnsembleDef* ensembleDef = createBeamEnsembleFromScanlineTxParameter(txEnsembleParams, numScanlines, txParams);
+			const BeamEnsembleDef* ensembleDef = createBeamEnsembleFromScanlineTxParameter(txEnsembleParams, numScanlines, txParams, transducer);
 			beamEnsembles.push_back(ensembleDef);
 		}
 
@@ -1471,7 +1537,8 @@ namespace supra
 	const BeamEnsembleDef* UsIntCephasonicsCc::createBeamEnsembleFromScanlineTxParameter(
 		const BeamEnsembleTxParameters& txEnsembleParameters, 
 		const vec2s numScanlines, 
-		const ScanlineTxParameters3D& txParameters)
+		const ScanlineTxParameters3D& txParameters,
+		uint32_t transducerIndex)
 	{
 		PlatformCapabilities pC = USPlatformMgr::getPlatformCapabilities(*m_cPlatformHandle);
 
@@ -1508,7 +1575,7 @@ namespace supra
 		// create passive wave with equal length
 		vector<PulseVal> myWaveDef_passive(numTotalEntries, GND);
 
-		vec2s elementLayout = m_pTransducer->getElementLayout();
+		vec2s elementLayout = m_pTransducers[transducerIndex]->getElementLayout();
 		// create tx map w.r.t. the muxed channels
 		vector<bool> txMap(m_numMuxedChannels, false);
 		// the transmit delay vector also has to be specified for all muxed channels
@@ -1520,7 +1587,7 @@ namespace supra
 			{
 				if(txParameters.elementMap[activeElementIdxX][activeElementIdxY]) //should be true all the time, except we explicitly exclude elements
 				{
-					size_t muxedChanIdx = m_probeElementsToMuxedChannelIndices[activeElementIdxX + elementLayout.x*activeElementIdxY];
+					size_t muxedChanIdx = m_probeElementsToMuxedChannelIndices[transducerIndex][activeElementIdxX + elementLayout.x*activeElementIdxY];
 					txMap[muxedChanIdx] = true;
 				}
 			}
@@ -1534,7 +1601,7 @@ namespace supra
 				{
 					size_t localElementIdxX = activeElementIdxX -txParameters.txAperture.begin.x;
 					size_t localElementIdxY = activeElementIdxY -txParameters.txAperture.begin.y;
-					size_t muxedChanIdx = m_probeElementsToMuxedChannelIndices[activeElementIdxX + elementLayout.x*activeElementIdxY];
+					size_t muxedChanIdx = m_probeElementsToMuxedChannelIndices[transducerIndex][activeElementIdxX + elementLayout.x*activeElementIdxY];
 
 					//TX Delays are given in units of 4* TX_CLOCK
 					// -> convert from seconds to 4*TX_Clock
@@ -1585,33 +1652,50 @@ namespace supra
 
 	void UsIntCephasonicsCc::setupRxCopying()
 	{
-		//remember which platforms need to be copied at all
-		m_rxPlatformsToCopy.resize(m_numPlatforms, false);
-
-		for (size_t muxedChannelIndex : m_probeElementsToMuxedChannelIndices)
+		m_rxPlatformsToCopy.resize(m_numBeamSequences);
+		m_rxNumPlatformsToCopy.resize(m_numBeamSequences);
+		for (size_t seqNumber = 0; seqNumber < m_numBeamSequences; seqNumber++)
 		{
-			size_t channelIndex = muxedChannelIndex % m_numChannelsTotal;
-			size_t platformIndex = channelIndex / m_numChannelsPerPlatform;
-			m_rxPlatformsToCopy[platformIndex] = true;
-		}
+			//remember which platforms need to be copied at all
+			m_rxPlatformsToCopy[seqNumber].resize(m_numPlatforms, false);
+			m_rxPlatformToTransducerMapping.resize(m_numPlatforms, 0);
+			m_rxPlatformCopyOffset.resize(m_numProbes);
 
-		//calculate how many the offset of the copying (in terms of platforms)
-		m_rxPlatformCopyOffset.resize(m_numPlatforms, 0);
-		size_t platformsToCopy = 0;
-		for(size_t platformIndex = 0; platformIndex < m_numPlatforms; platformIndex++)
-		{
-			if(m_rxPlatformsToCopy[platformIndex])
+			for (size_t probeIndex = 0; probeIndex < m_numProbes; probeIndex++)
 			{
-				m_rxPlatformCopyOffset[platformIndex] = platformsToCopy;
-				platformsToCopy++;
+				for (size_t muxedChannelIndex : m_probeElementsToMuxedChannelIndices[probeIndex])
+				{
+					size_t channelIndex = muxedChannelIndex % m_numChannelsTotal;
+					size_t platformIndex = channelIndex / m_numChannelsPerPlatform;
+					m_rxPlatformsToCopy[seqNumber][platformIndex] = true;
+					m_rxPlatformToTransducerMapping[platformIndex] = probeIndex;
+				}
+			}
+
+			m_rxNumPlatformsToCopy[seqNumber].resize(m_numProbes);
+			for (size_t probeIndex = 0; probeIndex < m_numProbes; probeIndex++)
+			{
+				//calculate how many the offset of the copying (in terms of platforms)
+				m_rxPlatformCopyOffset[probeIndex].resize(m_numPlatforms, 0);
+				size_t platformsToCopy = 0;
+				for(size_t platformIndex = 0; platformIndex < m_numPlatforms; platformIndex++)
+				{
+					if(m_rxPlatformsToCopy[seqNumber][platformIndex] && m_rxPlatformToTransducerMapping[platformIndex] == probeIndex)
+					{
+						m_rxPlatformCopyOffset[probeIndex][platformIndex] = platformsToCopy;
+						platformsToCopy++;
+					}
+				}
+				m_rxNumPlatformsToCopy[seqNumber][probeIndex] = platformsToCopy;
 			}
 		}
-		m_rxNumPlatformsToCopy = platformsToCopy;
 	}
 
 
 	void UsIntCephasonicsCc::putData(uint16_t platformIndex, size_t frameIndex, size_t frameNumber, uint32_t numChannels, size_t numSamples, size_t numBeams, uint8_t* dataScrambled)
 	{
+		//logging::log_always("Cep Frame: ", frameNumber, ", ", frameIndex, ", ", platformIndex, ", ", numChannels, ", ", numSamples, ", ", numBeams);
+
 		double timestamp = getCurrentTime();
 
 		// if frameNumber changes, check whether all subframe data (data from each beamformer) has arrived, yet
@@ -1642,165 +1726,199 @@ namespace supra
 			}
 		}
 		
-		// mark sequence frame triggered
-		m_sequenceFramesReceived[m_pFrameMap[frameIndex]] = true;	
+
 
 		//return;
 
-		static vector<bool> platformsReceived;
-		static size_t sNumBeams = 0;
-		static size_t sNumChannels = 0;
-		static size_t sArraySize = 0;
-		static shared_ptr<Container<int16_t> > pData = nullptr;
+		// As this function is called for each time the data from one platform for one frame of one sequence is ready
+		//  (and data from different sequences can arrive interleaved), we use those structures to keep track of what we
+		//  already received.
 
-		if(platformsReceived.size() != m_numPlatforms)
+		// platformsReceived[sequenceNumber (0-based)][platformIndex]
+		static vector<vector<bool>> platformsReceived;
+		// sNumBeams[sequenceNumber (0-based)]
+		static vector<size_t> sNumBeams;
+		// sNumChannels[sequenceNumber (0-based)]
+		static vector<size_t> sNumChannels;
+		// sArraySize[sequenceNumber (0-based)][probeIndex]
+		static vector<std::vector<size_t> > sArraySize;
+		// pData[sequenceNumber (0-based)][probeIndex]
+		static vector<std::vector<shared_ptr<Container<int16_t> > > > pData;
+
+		// Ensure all datastructures have the required size
+		if(sNumBeams.size() != m_numBeamSequences)
 		{
-			platformsReceived.resize(m_numPlatforms, false);
+			sNumBeams.clear();
+			sNumBeams.resize(m_numBeamSequences);
 		}
-		if(numBeams != sNumBeams || numChannels != sNumChannels)
+		if(sNumChannels.size() != m_numBeamSequences)
 		{
-			sNumBeams = numBeams;
-			sNumChannels = numChannels;
-			sArraySize = m_rxNumPlatformsToCopy*m_numChannelsPerPlatform * numSamples * sNumBeams;
-			pData = make_shared<Container<int16_t> >(ContainerLocation::LocationGpu, ContainerFactory::getNextStream(), sArraySize);
+			sNumChannels.clear();
+			sNumChannels.resize(m_numBeamSequences);
+		}
 
-			platformsReceived.assign(m_numPlatforms, false);
+		if(sArraySize.size() != m_numBeamSequences)
+		{
+			sArraySize.clear();
+			sArraySize.resize(m_numBeamSequences);
+		}
+		for(size_t sequenceNumber = 0; sequenceNumber < m_numBeamSequences; sequenceNumber++)
+		{
+			if(sArraySize[sequenceNumber].size() != m_numProbes)
+			{
+				sArraySize[sequenceNumber].clear();
+				sArraySize[sequenceNumber].resize(m_numProbes, 0);
+			}
+		}
+
+		if(pData.size() != m_numBeamSequences)
+		{
+			pData.clear();
+			pData.resize(m_numBeamSequences);
+		}
+		for(size_t sequenceNumber = 0; sequenceNumber < m_numBeamSequences; sequenceNumber++)
+		{
+			if(pData[sequenceNumber].size() != m_numProbes)
+			{
+				pData[sequenceNumber].clear();
+				pData[sequenceNumber].resize(m_numProbes, nullptr);
+			}
+		}
+
+		if(platformsReceived.size() != m_numBeamSequences)
+		{
+			platformsReceived.clear();
+			platformsReceived.resize(m_numBeamSequences);
+		}
+		for(size_t sequenceNumber = 0; sequenceNumber < m_numBeamSequences; sequenceNumber++)
+		{
+			if(platformsReceived[sequenceNumber].size() != m_numPlatforms)
+			{
+				platformsReceived[sequenceNumber].resize(m_numPlatforms, false);
+			}
+		}
+
+		// Make sure we get the sizes that we expect
+		size_t linFrameID = m_pFrameMap[frameIndex];
+		if(numBeams != sNumBeams[linFrameID] || numChannels != sNumChannels[linFrameID])
+		{
+			sNumBeams[linFrameID] = numBeams;
+			sNumChannels[linFrameID] = numChannels;
+			for (size_t probeIndex = 0; probeIndex < m_numProbes; probeIndex++)
+			{
+				sArraySize[linFrameID][probeIndex] = m_rxNumPlatformsToCopy[linFrameID][probeIndex]*m_numChannelsPerPlatform * numSamples * numBeams;
+				pData[linFrameID][probeIndex] = make_shared<Container<int16_t> >(ContainerLocation::LocationGpu, ContainerFactory::getNextStream(), sArraySize[linFrameID][probeIndex]);
+			}
+
+			platformsReceived[linFrameID].assign(m_numPlatforms, false);
 		}
 
 		platformIndex = platformIndex % m_numPlatforms;
 		size_t numBytesChannels = numChannels*12/8;
 
-		if(m_rxPlatformsToCopy[platformIndex])
+		if(m_rxPlatformsToCopy[linFrameID][platformIndex])
 		{
 			{
-				auto deviceScrambled = unique_ptr<Container<uint8_t> >(new Container<uint8_t>(LocationGpu, pData->getStream(), numBytesChannels*numSamples*numBeams));
-				cudaSafeCall(cudaMemcpyAsync(deviceScrambled->get(), dataScrambled, numBytesChannels*numSamples*numBeams*sizeof(uint8_t), cudaMemcpyHostToDevice, pData->getStream()));
+				size_t probeIndex = m_rxPlatformToTransducerMapping[platformIndex];
 
-				size_t platformOffset = m_rxPlatformCopyOffset[platformIndex];
+				auto deviceScrambled = unique_ptr<Container<uint8_t> >(new Container<uint8_t>(LocationGpu, pData[linFrameID][probeIndex]->getStream(), numBytesChannels*numSamples*numBeams));
+				cudaSafeCall(cudaMemcpyAsync(deviceScrambled->get(), dataScrambled, numBytesChannels*numSamples*numBeams*sizeof(uint8_t), cudaMemcpyHostToDevice, deviceScrambled->getStream()));
+
+				size_t platformOffset = m_rxPlatformCopyOffset[probeIndex][platformIndex];
 				dim3 blockSize(16, 8);
 				dim3 gridSize(
 						static_cast<unsigned int>((numSamples + blockSize.x - 1) / blockSize.x),
 						static_cast<unsigned int>((numBeams + blockSize.y - 1) / blockSize.y));
-				copyUnscramble<<<gridSize, blockSize, 0, pData->getStream()>>>(
+				copyUnscramble<<<gridSize, blockSize, 0, deviceScrambled->getStream()>>>(
 						numBeams,
 						numSamples,
 						numChannels,
 						numBytesChannels,
 						platformOffset,
-						m_rxNumPlatformsToCopy,
+						m_rxNumPlatformsToCopy[linFrameID][probeIndex],
 						deviceScrambled->get(),
-						pData->get());
+						pData[linFrameID][probeIndex]->get());
 				cudaSafeCall(cudaPeekAtLastError());
 			}
-			//copy all raw data
-			/*for(size_t beam = 0; beam < numBeams; beam++)
-			{
-				for(size_t sample = 0; sample < numSamples; sample++)
-				{
-					for(size_t channel = 0; channel < (numChannels/4); channel ++)
-					{
-						size_t channelOut;
-						if(channel*4 < 16)
-						{
-							channelOut = channel*4;
-						}
-						else if(channel*4 < 32)
-						{
-							channelOut = channel*4 + 16;
-						}
-						else if(channel*4 < 48)
-						{
-							channelOut = channel*4 - 16;
-						}
-						else {
-							channelOut = channel*4;
-						}
-						CephasonicsRawData4Channels d;
-						d.raw[0] = dataScrambled[ channel*6 +     sample*numBytesChannels + beam*numBytesChannels*numSamples];
-						d.raw[1] = dataScrambled[ channel*6 + 1 + sample*numBytesChannels + beam*numBytesChannels*numSamples];
-						d.raw[2] = dataScrambled[ channel*6 + 2 + sample*numBytesChannels + beam*numBytesChannels*numSamples];
-						d.raw[3] = dataScrambled[ channel*6 + 3 + sample*numBytesChannels + beam*numBytesChannels*numSamples];
-						d.raw[4] = dataScrambled[ channel*6 + 4 + sample*numBytesChannels + beam*numBytesChannels*numSamples];
-						d.raw[5] = dataScrambled[ channel*6 + 5 + sample*numBytesChannels + beam*numBytesChannels*numSamples];
 
-						int16_t o1 = d.ordered.c3;
-						int16_t o2 = d.ordered.c2;
-						int16_t o3 = d.ordered.c1;
-						int16_t o4 = d.ordered.c0;
-
-						pData->get()[sample + (channelOut + 0 + platformOffset*m_numChannelsPerPlatform)*numSamples +
-													 beam*m_numChannelsPerPlatform*m_rxNumPlatformsToCopy*numSamples] = o1;
-						pData->get()[sample + (channelOut + 1 + platformOffset*m_numChannelsPerPlatform)*numSamples +
-																		 beam*m_numChannelsPerPlatform*m_rxNumPlatformsToCopy*numSamples] = o2;
-						pData->get()[sample + (channelOut + 2 + platformOffset*m_numChannelsPerPlatform)*numSamples +
-																		 beam*m_numChannelsPerPlatform*m_rxNumPlatformsToCopy*numSamples] = o3;
-						pData->get()[sample + (channelOut + 3 + platformOffset*m_numChannelsPerPlatform)*numSamples +
-																		 beam*m_numChannelsPerPlatform*m_rxNumPlatformsToCopy*numSamples] = o4;
-					}
-				}
-			}*/
-			platformsReceived[platformIndex] = true;
+			platformsReceived[linFrameID][platformIndex] = true;
 
 			bool allreceived = true;
 			for (size_t platformToCheck = 0; platformToCheck < m_numPlatforms; platformToCheck++)
 			{
-				allreceived = allreceived && (platformsReceived[platformToCheck] || !m_rxPlatformsToCopy[platformToCheck]);
+				allreceived = allreceived && (platformsReceived[linFrameID][platformToCheck] || !m_rxPlatformsToCopy[linFrameID][platformToCheck]);
 			}
 			if(allreceived)
 			{
+				// mark sequence frame triggered
+				m_sequenceFramesReceived[linFrameID] = true;
+
 				lock_guard<mutex> lock(m_objectMutex);
 				m_callFrequency.measure();
-
-				size_t linFrID = m_pFrameMap[frameIndex];
 
 				//build filename
 				/*std::stringstream filename;
 				filename << "/mnt/data/ascii_test/rawData_copiedtogether.txt";
 				writeAscii(filename.str(), pData.get(), sArraySize);*/
 
-				std::shared_ptr<Beamformer> bf = m_pSequencer->getBeamformer(linFrID);
-				std::shared_ptr<USImageProperties> imProps = m_pSequencer->getUSImgProperties(linFrID);
+				std::shared_ptr<Beamformer> bf = m_pSequencer->getBeamformer(linFrameID);
+				std::shared_ptr<USImageProperties> imProps = m_pSequencer->getUSImgProperties(linFrameID);
 
-				// we received the data from all necessary platforms, now we can start the beamforming
-				shared_ptr<USRawData> rawData = make_shared<USRawData>
-					(numBeams,
-					m_pTransducer->getNumElements(),
-					m_pTransducer->getElementLayout(),
-					m_rxNumPlatformsToCopy*m_numChannelsPerPlatform,
-					numSamples,
-					 m_systemRxClock * 1e6, //MHz to Hz
-					pData,
-					bf->getCurrentRxBeamformerParameters(),
-					imProps,
-					timestamp,
-					timestamp);
-
-				if(m_writeMockData && !m_mockDataWritten)
+				shared_ptr<const RecordObject> rawDataMain = nullptr;
+				std::vector<shared_ptr<const RecordObject> > rawDataSynced;
+				for (size_t probeIndex = 0; probeIndex < m_numProbes; probeIndex++)
 				{
-					rawData->getRxBeamformerParameters()->writeMetaDataForMock(m_mockDataFilename, const_pointer_cast<const USRawData>(rawData));
-					m_mockDataWritten = true;
-				}
+					// we received the data from all necessary platforms, now we can start the beamforming
+					shared_ptr<USRawData> rawData = make_shared<USRawData>
+						(numBeams,
+						m_pTransducers[probeIndex]->getNumElements(),
+						m_pTransducers[probeIndex]->getElementLayout(),
+						m_rxNumPlatformsToCopy[linFrameID][probeIndex]*m_numChannelsPerPlatform,
+						numSamples,
+						 m_systemRxClock * 1e6, //MHz to Hz
+						pData[linFrameID][probeIndex],
+						bf->getCurrentRxBeamformerParameters(),
+						imProps,
+						timestamp,
+						timestamp);
 
-				pData = make_shared<Container<int16_t> >(ContainerLocation::LocationGpu, ContainerFactory::getNextStream(), sArraySize);
-				platformsReceived.assign(m_numPlatforms, false);
+					if(m_writeMockData && !m_mockDataWritten)
+					{
+						rawData->getRxBeamformerParameters()->writeMetaDataForMock(m_mockDataFilename, const_pointer_cast<const USRawData>(rawData));
+						m_mockDataWritten = true;
+					}
+
+					if (probeIndex == bf->getTxActiveTranducer())
+					{
+						rawDataMain = rawData;
+					}
+					else {
+						rawDataSynced.push_back(rawData);
+					}
+
+					pData[linFrameID][probeIndex] = make_shared<Container<int16_t> >(ContainerLocation::LocationGpu, ContainerFactory::getNextStream(), sArraySize[linFrameID][probeIndex]);
+				}
+				platformsReceived[linFrameID].assign(m_numPlatforms, false);
+
+				shared_ptr<SyncRecordObject> synced = make_shared<SyncRecordObject>(rawDataMain, rawDataSynced, timestamp, timestamp);
 
 				// switch outputs for sequences. I.e. first sequence transmitted on output port 0, second port 1, etc.
 				// max ouptut ports is 2 for the moment.
-				if (linFrID<m_numOutputs)
+				if (linFrameID<m_numOutputs)
 				{
-					switch (linFrID)
+					switch (linFrameID)
 					{
-						case 0:	addData<0>(rawData); break;
-						case 1: addData<1>(rawData); break;
-						case 2: addData<2>(rawData); break;
-						case 3: addData<3>(rawData); break;
-						case 4: addData<4>(rawData); break;
-						case 5: addData<5>(rawData); break;
-						case 6: addData<6>(rawData); break;
-						case 7: addData<7>(rawData); break;
-						case 8: addData<8>(rawData); break;
-						case 9: addData<9>(rawData); break;
-						default: addData<0>(rawData);
+						case 0:	addData<0>(synced); break;
+						case 1: addData<1>(synced); break;
+						case 2: addData<2>(synced); break;
+						case 3: addData<3>(synced); break;
+						case 4: addData<4>(synced); break;
+						case 5: addData<5>(synced); break;
+						case 6: addData<6>(synced); break;
+						case 7: addData<7>(synced); break;
+						case 8: addData<8>(synced); break;
+						case 9: addData<9>(synced); break;
+						default: addData<0>(synced);
 						break;
 					}
 				}

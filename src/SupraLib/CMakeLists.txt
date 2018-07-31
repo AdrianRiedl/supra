@@ -130,7 +130,8 @@ SET(SUPRA_Lib_SOURCE
 	FrequencyLimiterNode.cpp
 	StreamSyncNode.cpp
 	AutoQuitNode.cpp
-	ExampleNodes/ImageProcessingCpuNode.cpp)
+	ExampleNodes/ImageProcessingCpuNode.cpp
+	DataInfoNode.cpp)
 SET(SUPRA_Lib_HEADERS
 	vec.h
 	Container.h
@@ -162,7 +163,8 @@ SET(SUPRA_Lib_HEADERS
 	FrequencyLimiterNode.h
 	StreamSyncNode.h
 	AutoQuitNode.h
-	ExampleNodes/ImageProcessingCpuNode.h)
+	ExampleNodes/ImageProcessingCpuNode.h
+	DataInfoNode.h)
 	
 IF(SUPRA_CUDA)
 	SET(SUPRA_Lib_SOURCE

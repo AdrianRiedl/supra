@@ -120,11 +120,12 @@ namespace supra
 		void setupRxCopying();
 		//void initBeams();
 		void createSequence();
-		std::pair<size_t, const cs::FrameDef*> createFrame(const std::vector<ScanlineTxParameters3D>* txBeamParams, const std::shared_ptr<USImageProperties> imageProps, const BeamEnsembleTxParameters& txParamsCs, const bool disableRx);
-		const BeamEnsembleDef* createBeamEnsembleFromScanlineTxParameter(const BeamEnsembleTxParameters& txEnsembleParams, const vec2s numScanlines, const ScanlineTxParameters3D& txParameters);
+		std::pair<size_t, const cs::FrameDef*> createFrame(const std::vector<ScanlineTxParameters3D>* txBeamParams, const std::shared_ptr<USImageProperties> imageProps, const BeamEnsembleTxParameters& txParamsCs, const bool disableRx, uint32_t transducerIndex);
+		const BeamEnsembleDef* createBeamEnsembleFromScanlineTxParameter(const BeamEnsembleTxParameters& txEnsembleParams, const vec2s numScanlines, const ScanlineTxParameters3D& txParameters, uint32_t transducerIndex);
 		void createFrame();
 		std::vector<uint8> createWeightedWaveform(const BeamEnsembleTxParameters& txParams, size_t numTotalEntries, float weight, uint8_t csTxOversample);
-		void updateTransducer();
+		void updateTransducers();
+		void updateTransducer(size_t transducerIndex);
 		void setBeamSequenceValueRange(size_t oldBeamSequenceValueRange);
 		std::string getBeamSequenceApp(size_t totalSequences, size_t sequenceId); 	// return string with appendix for each beam sequence configuration value
 
@@ -153,7 +154,7 @@ namespace supra
 		std::unique_ptr<UsIntCephasonicsCcProc> m_pDataProcessor;
 		std::unique_ptr<Sequencer> m_pSequencer;
 
-		std::unique_ptr<USTransducer> m_pTransducer;
+		std::vector<std::unique_ptr<USTransducer> > m_pTransducers;
 
 		// global, one ScanDef and Probe possible
 		const cs::ScanDef*        m_pScan;
@@ -174,8 +175,9 @@ namespace supra
 		uint16_t m_probeMapping;
 
 		// system-wide imaging settings (i.e. identical for all individual firings or images in a sequence)
-		std::string m_probeName;
-		std::vector<size_t> m_probeElementsToMuxedChannelIndices;
+		size_t m_numProbes;
+		std::vector<std::string> m_probeNames;
+		std::vector<std::vector<size_t> > m_probeElementsToMuxedChannelIndices;
 		double m_startDepth;
 		double m_endDepth;
 		bool   m_processorMeasureThroughput;
@@ -200,9 +202,10 @@ namespace supra
 
 		// RX backend settings  (system-wide)
 		uint32_t m_systemRxClock;
-		std::vector<bool> m_rxPlatformsToCopy;
-		std::vector<size_t> m_rxPlatformCopyOffset;
-		size_t m_rxNumPlatformsToCopy;
+		std::vector<std::vector<bool> > m_rxPlatformsToCopy;
+		std::vector<std::vector<size_t> > m_rxPlatformCopyOffset;
+		std::vector<size_t> m_rxPlatformToTransducerMapping;
+		std::vector<std::vector<size_t> > m_rxNumPlatformsToCopy;
 
 		bool m_writeMockData;
 		bool m_mockDataWritten;

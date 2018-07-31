@@ -36,6 +36,7 @@
 #include "StreamSynchronizer.h"
 #include "FrequencyLimiterNode.h"
 #include "AutoQuitNode.h"
+#include "DataInfoNode.h"
 #include "ExampleNodes/ImageProcessingCpuNode.h"
 #include "ExampleNodes/ImageProcessingCudaNode.h"
 
@@ -178,6 +179,7 @@ namespace supra
 		{ "FrequencyLimiterNode",   [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<FrequencyLimiterNode>(g, nodeID, queueing); } },
 		{ "AutoQuitNode",           [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<AutoQuitNode>(g, nodeID, queueing); } },
 		{ "StreamSyncNode",         [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<StreamSyncNode>(g, nodeID, queueing); } },
+		{ "DataInfoNode",           [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<DataInfoNode>(g, nodeID, queueing); } },
 		{ "ImageProcessingCpuNode", [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<ImageProcessingCpuNode>(g, nodeID, queueing); } },
 #ifdef HAVE_CUDA
 		{ "ImageProcessingCudaNode", [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<ImageProcessingCudaNode>(g, nodeID, queueing); } },

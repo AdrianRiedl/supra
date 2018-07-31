@@ -98,6 +98,16 @@ namespace supra
 		m_pTransducer = transducer;
 	}
 
+	void Beamformer::setTxActiveTransducer(const uint32_t transducerIndex)
+	{
+		if (m_txActiveTransducer != transducerIndex)
+		{
+			m_ready = false;
+		}
+
+		m_txActiveTransducer = transducerIndex;
+	}
+
 	
 	void Beamformer::setScanType(const std::string scanType)
 	{
@@ -302,6 +312,10 @@ namespace supra
 		m_ready = false;
 	}
 
+	uint32_t Beamformer::getTxActiveTranducer() const
+	{
+		return m_txActiveTransducer;
+	}
 	
 	std::string Beamformer::getScanType() const
 	{
@@ -446,17 +460,27 @@ namespace supra
 				//evenly space the scanlines between the first and last element
 				for (size_t scanlineIdx = 0; scanlineIdx < numScanlines; scanlineIdx++)
 				{
+
+					double interpolationPosition;
+					if(numScanlines > 1)
+					{
+						interpolationPosition = static_cast<double>(scanlineIdx) / (numScanlines - 1);
+					}
+					else {
+						interpolationPosition = 0.5;
+					}
+
 					// the position of the scanline on the x axis
 					double scanlinePosition = firstElement.x +
-						static_cast<double>(scanlineIdx) / (numScanlines - 1) * (lastElement.x - firstElement.x);
+						interpolationPosition * (lastElement.x - firstElement.x);
 					
 					// the scanline position in terms of elementIndices
-					double scanlinePositionRelative = static_cast<double>(scanlineIdx) / (numScanlines - 1) * (m_pTransducer->getNumElements() - 1);
+					double scanlinePositionRelative = interpolationPosition * (m_pTransducer->getNumElements() - 1);
 
 					rect2s activeAperture = computeAperture(elementLayout, m_maxApertureSize, { scanlinePositionRelative, 0 });
 					rect2s txAperture = computeAperture(elementLayout, m_txMaxApertureSize, { scanlinePositionRelative, 0 });
 
-					double scanlineAngle = steerAngle - (sectorAngle / 2) + (scanlineIdx / (numScanlines - 1) * sectorAngle);
+					double scanlineAngle = steerAngle - (sectorAngle / 2) + (interpolationPosition * sectorAngle);
 					m_txParameters[scanlineIdx] = getTxScanline3D(activeAperture, txAperture, vec2d{ scanlinePosition, 0 }, vec2d{ scanlineAngle, 0 });
 				}
 		
