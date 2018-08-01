@@ -47,7 +47,7 @@ namespace supra
 		std::lock_guard<std::mutex> objectLock(m_objectMutex);
 
 		//prepare the list of synced Objects
-		vector<shared_ptr<const RecordObject> > synced;
+		vector<shared_ptr<RecordObject> > synced;
 
 		m_callFrequency.measure();
 		for (size_t i = 0; i < m_syncLists.size(); i++)

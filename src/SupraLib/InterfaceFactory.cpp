@@ -34,6 +34,7 @@
 #include "StreamSyncNode.h"
 #include "TemporalOffsetNode.h"
 #include "StreamSynchronizer.h"
+#include "StreamSplitNode.h"
 #include "FrequencyLimiterNode.h"
 #include "AutoQuitNode.h"
 #include "DataInfoNode.h"
@@ -175,6 +176,7 @@ namespace supra
 		InterfaceFactory::m_nodeCreators = 
 	{
 		{ "StreamSynchronizer",     [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<StreamSynchronizer>(g, nodeID, queueing); } },
+		{ "StreamSplitNode",        [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<StreamSplitNode>(g, nodeID, queueing); } },
 		{ "TemporalOffsetNode",     [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<TemporalOffsetNode>(g, nodeID, queueing); } },
 		{ "FrequencyLimiterNode",   [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<FrequencyLimiterNode>(g, nodeID, queueing); } },
 		{ "AutoQuitNode",           [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<AutoQuitNode>(g, nodeID, queueing); } },

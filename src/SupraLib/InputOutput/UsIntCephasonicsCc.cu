@@ -588,46 +588,47 @@ namespace supra
 			}
 		}
 
-		m_pSequencer->setTransducer(m_pTransducers[transducerIndex].get());
-
-
 		// TODO: currently all beamformers share same aperture
 		for (auto numSeq = 0; numSeq < m_numBeamSequences; ++numSeq)
 		{
-			
-			std::shared_ptr<Beamformer> bf = m_pSequencer->getBeamformer(numSeq);
-
-			vec2s bfTxApertureSize = bf->getTxApertureSize();
-			vec2s bfApertureSize = bf->getApertureSize();
-
-			if(bfTxApertureSize.x == 0)
+			auto bf = m_pSequencer->getBeamformer(numSeq);
+			if(bf->getTxActiveTranducer() == transducerIndex)
 			{
-				bfTxApertureSize.x = maxAperture.x;
-			}
-			if(bfTxApertureSize.y == 0)
-			{
-				bfTxApertureSize.y = maxAperture.y;
-			}
-
-			if(bfApertureSize.x == 0)
-			{
-				bfApertureSize.x = maxAperture.x;
-			}
-			if(bfApertureSize.y == 0)
-			{
-				bfApertureSize.y = maxAperture.y;
-			}
-			bfApertureSize = min(bfApertureSize, maxAperture);
-			bfTxApertureSize = min(bfTxApertureSize, maxAperture);
-
-			bf->setTxMaxApertureSize(bfTxApertureSize);
-			bf->setMaxApertureSize(bfApertureSize);
+				bf->setTransducer(m_pTransducers[transducerIndex].get());
 
 
-			// (re)compute the internal TX parameters for a beamformer if any parameter changed
-			if (!bf->isReady())
-			{
-				bf->computeTxParameters();
+				vec2s bfTxApertureSize = bf->getTxApertureSize();
+				vec2s bfApertureSize = bf->getApertureSize();
+
+				if(bfTxApertureSize.x == 0)
+				{
+					bfTxApertureSize.x = maxAperture.x;
+				}
+				if(bfTxApertureSize.y == 0)
+				{
+					bfTxApertureSize.y = maxAperture.y;
+				}
+
+				if(bfApertureSize.x == 0)
+				{
+					bfApertureSize.x = maxAperture.x;
+				}
+				if(bfApertureSize.y == 0)
+				{
+					bfApertureSize.y = maxAperture.y;
+				}
+				bfApertureSize = min(bfApertureSize, maxAperture);
+				bfTxApertureSize = min(bfTxApertureSize, maxAperture);
+
+				bf->setTxMaxApertureSize(bfTxApertureSize);
+				bf->setMaxApertureSize(bfApertureSize);
+
+
+				// (re)compute the internal TX parameters for a beamformer if any parameter changed
+				//if (!bf->isReady())
+				{
+					bf->computeTxParameters();
+				}
 			}
 		}
 	}
@@ -908,7 +909,8 @@ namespace supra
 			std::string seqIdApp = getBeamSequenceApp(m_numBeamSequences,numSeq);
 			
 			// scan or image-specific configuration values
-			bf->setTxActiveTransducer(m_configurationDictionary.get<uint32_t>(seqIdApp+"txActiveTransducer"));
+			logging::log_always("setting main transducer: ", numSeq, ", ", m_configurationDictionary.get<uint32_t>(seqIdApp+"txTransducer"));
+			bf->setTxActiveTransducer(m_configurationDictionary.get<uint32_t>(seqIdApp+"txTransducer"));
 			std::string scanType = m_configurationDictionary.get<std::string>(seqIdApp+"scanType");
 			bf->setScanType(scanType);
 
@@ -1864,8 +1866,8 @@ namespace supra
 				std::shared_ptr<Beamformer> bf = m_pSequencer->getBeamformer(linFrameID);
 				std::shared_ptr<USImageProperties> imProps = m_pSequencer->getUSImgProperties(linFrameID);
 
-				shared_ptr<const RecordObject> rawDataMain = nullptr;
-				std::vector<shared_ptr<const RecordObject> > rawDataSynced;
+				shared_ptr<RecordObject> rawDataMain = nullptr;
+				std::vector<shared_ptr<RecordObject> > rawDataSynced;
 				for (size_t probeIndex = 0; probeIndex < m_numProbes; probeIndex++)
 				{
 					// we received the data from all necessary platforms, now we can start the beamforming
@@ -1890,9 +1892,11 @@ namespace supra
 
 					if (probeIndex == bf->getTxActiveTranducer())
 					{
+						logging::log_always("Frame: ", linFrameID, " main transducer: ", probeIndex);
 						rawDataMain = rawData;
 					}
 					else {
+						logging::log_always("Frame: ", linFrameID, " side transducer: ", probeIndex);
 						rawDataSynced.push_back(rawData);
 					}
 

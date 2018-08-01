@@ -33,8 +33,8 @@ namespace supra
 	public:
 		/// Creates a synchronized record from a main record and a vector of synched records
 		SyncRecordObject(
-			std::shared_ptr<const RecordObject> mainRecord,
-			std::vector<std::shared_ptr<const RecordObject> > syncedRecords,
+			std::shared_ptr<RecordObject> mainRecord,
+			std::vector<std::shared_ptr<RecordObject> > syncedRecords,
 			double receiveTimestamp, double syncTimestamp)
 			: RecordObject(receiveTimestamp, syncTimestamp)
 			, m_pMainRecord(mainRecord)
@@ -44,13 +44,13 @@ namespace supra
 		virtual RecordObjectType getType() const { return TypeSyncRecordObject; }
 
 		/// Returns the main record
-		std::shared_ptr<const RecordObject> getMainRecord() const { return m_pMainRecord; }
+		std::shared_ptr<RecordObject> getMainRecord() const { return m_pMainRecord; }
 		/// Returns the synchonized records
-		std::vector<std::shared_ptr<const RecordObject> > getSyncedRecords() const { return m_pSyncedRecords; };
+		std::vector<std::shared_ptr<RecordObject> > getSyncedRecords() const { return m_pSyncedRecords; };
 
 	private:
-		std::shared_ptr<const RecordObject> m_pMainRecord;
-		std::vector<std::shared_ptr<const RecordObject> > m_pSyncedRecords;
+		std::shared_ptr<RecordObject> m_pMainRecord;
+		std::vector<std::shared_ptr<RecordObject> > m_pSyncedRecords;
 	};
 }
 

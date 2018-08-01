@@ -129,6 +129,7 @@ SET(SUPRA_Lib_SOURCE
 	utilities/tinyxml2/tinyxml2.cpp
 	FrequencyLimiterNode.cpp
 	StreamSyncNode.cpp
+	StreamSplitNode.cpp
 	AutoQuitNode.cpp
 	ExampleNodes/ImageProcessingCpuNode.cpp
 	DataInfoNode.cpp)
@@ -162,6 +163,7 @@ SET(SUPRA_Lib_HEADERS
 	utilities/tinyxml2/tinyxml2.h
 	FrequencyLimiterNode.h
 	StreamSyncNode.h
+	StreamSplitNode.h
 	AutoQuitNode.h
 	ExampleNodes/ImageProcessingCpuNode.h
 	DataInfoNode.h)

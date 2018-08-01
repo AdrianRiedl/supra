@@ -2,9 +2,9 @@
 <supra_config>
 	<devices>
 		<inputs>
-			<input type="UltrasoundInterfaceCephasonicsCC" id="US-Cep" ports="2">
+			<input type="UltrasoundInterfaceCephasonicsCC" id="US-Cep" ports="1">
 				<param name="sequenceNumFrames" type="uint32_t">
-					2
+					1
 				</param>
 				<param name="highPassFilterBypass" type="bool">
 					0
@@ -52,132 +52,73 @@
 					SingleElement
 				</param>
 
-				<param name="seq0_txTransducer" type="uint32_t">
+				<param name="txTransducer" type="uint32_t">
 					0
 				</param>
-				<param name="seq0_txVoltage" type="double">
+				<param name="txVoltage" type="double">
 					40
 				</param>
-				<param name="seq0_txFrequency" type="double">
+				<param name="txFrequency" type="double">
 					7
 				</param>
-				<param name="seq0_txPulseType" type="string">
+				<param name="txPulseType" type="string">
 					bipolar
 				</param>
-				<param name="seq0_txPulseInversion" type="bool">
+				<param name="txPulseInversion" type="bool">
 					0
 				</param>
-				<param name="seq0_txFocusActive" type="bool">
+				<param name="txFocusActive" type="bool">
 					1
 				</param>
-				<param name="seq0_txFocusDepth" type="double">
+				<param name="txFocusDepth" type="double">
 					30
 				</param>
-				<param name="seq0_txSectorAngleX" type="double">
+				<param name="txSectorAngleX" type="double">
 					0
 				</param>
-				<param name="seq0_txSectorAngleY" type="double">
+				<param name="txSectorAngleY" type="double">
 					0
 				</param>
-				<param name="seq0_numScanlinesX" type="uint32_t">
+				<param name="numScanlinesX" type="uint32_t">
 					64
 				</param>
-				<param name="seq0_numScanlinesY" type="uint32_t">
+				<param name="numScanlinesY" type="uint32_t">
 					1
 				</param>
-				<param name="seq0_rxScanlineSubdivisionX" type="uint32_t">
+				<param name="rxScanlineSubdivisionX" type="uint32_t">
 					4
 				</param>
-				<param name="seq0_rxScanlineSubdivisionY" type="uint32_t">
+				<param name="rxScanlineSubdivisionY" type="uint32_t">
 					1
 				</param>
-				<param name="seq0_numSamplesRecon" type="uint32_t">
+				<param name="numSamplesRecon" type="uint32_t">
 					2000
 				</param>
-				<param name="seq0_scanType" type="string">
+				<param name="scanType" type="string">
 					linear
 				</param> 
-				<param name="seq0_txCorrectMatchingLayers" type="bool">
+				<param name="txCorrectMatchingLayers" type="bool">
 					1
 				</param>
-				<param name="seq0_txWindowType" type="string">
+				<param name="txWindowType" type="string">
 					Hamming
 				</param>
-				<param name="seq0_txWindowParameter" type="double">
+				<param name="txWindowParameter" type="double">
 					0.5
 				</param>
-				<param name="seq0_txApertureSizeX" type="uint32_t">
+				<param name="txApertureSizeX" type="uint32_t">
 					32
 				</param>
-				<param name="seq0_txApertureSizeY" type="uint32_t">
+				<param name="txApertureSizeY" type="uint32_t">
 					1
 				</param>
 
-				<param name="seq1_txTransducer" type="uint32_t">
-					1
-				</param>
-				<param name="seq1_txVoltage" type="double">
-					40
-				</param>
-				<param name="seq1_txFrequency" type="double">
-					7
-				</param>
-				<param name="seq1_txPulseType" type="string">
-					bipolar
-				</param>
-				<param name="seq1_txPulseInversion" type="bool">
-					0
-				</param>
-				<param name="seq1_txFocusActive" type="bool">
-					0
-				</param>
-				<param name="seq1_txFocusDepth" type="double">
-					30
-				</param>
-				<param name="seq1_txSectorAngleX" type="double">
-					0
-				</param>
-				<param name="seq1_txSectorAngleY" type="double">
-					0
-				</param>
-				<param name="seq1_numScanlinesX" type="uint32_t">
-					1
-				</param>
-				<param name="seq1_numScanlinesY" type="uint32_t">
-					1
-				</param>
-				<param name="seq1_rxScanlineSubdivisionX" type="uint32_t">
-					1
-				</param>
-				<param name="seq1_rxScanlineSubdivisionY" type="uint32_t">
-					1
-				</param>
-				<param name="seq1_numSamplesRecon" type="uint32_t">
-					2000
-				</param>
-				<param name="seq1_scanType" type="string">
-					linear
-				</param> 
-				<param name="seq1_txCorrectMatchingLayers" type="bool">
-					0
-				</param>
-				<param name="seq1_txWindowType" type="string">
-					Rectangular
-				</param>
-				<param name="seq1_txWindowParameter" type="double">
-					0
-				</param>
-				<param name="seq1_txApertureSizeX" type="uint32_t">
-					1
-				</param>
-				<param name="seq1_txApertureSizeY" type="uint32_t">
-					1
-				</param>
+				
 			</input>
 		</inputs>
 		<outputs>
 			<output type="OpenIGTLinkOutputDevice" id="IGTL" />
-			<output type="MetaImageOutputDevice" id="MHD_seq0_0">
+			<output type="MetaImageOutputDevice" id="MHD_0">
 				<param name="createSequences" type="bool">
 					1
 				</param>
@@ -185,7 +126,7 @@
 					seq_0_0
 				</param>
 			</output>
-			<output type="MetaImageOutputDevice" id="MHD_seq0_1">
+			<output type="MetaImageOutputDevice" id="MHD_1">
 				<param name="createSequences" type="bool">
 					1
 				</param>
@@ -351,11 +292,11 @@
 		</connection>
 		<connection>
 			<from id="SPLIT1" port="0" />
-			<to id="MHD_seq0_0" port="0" />
+			<to id="MHD_0" port="0" />
 		</connection>
 		<connection>
 			<from id="SPLIT1" port="1" />
-			<to id="MHD_seq0_1" port="0" />
+			<to id="MHD_1" port="0" />
 		</connection>
 		<connection>
 			<from id="SPLIT2" port="0" />
