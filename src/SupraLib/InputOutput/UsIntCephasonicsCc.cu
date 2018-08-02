@@ -184,7 +184,7 @@ namespace supra
 		//Setup allowed values for parameters
 		m_valueRangeDictionary.set<uint32_t>("systemTxClock", {40, 20}, 40, "TX system clock (MHz)");
 		m_valueRangeDictionary.set<string>("probeName", {"Linear", "2D", "CPLA12875", "CPLA06475", "SingleElement"}, "Linear", "Probe");
-		m_valueRangeDictionary.set<string>("probeName_2", {"-", "Linear", "2D", "CPLA12875", "CPLA06475", "SingleElement"}, "Linear", "Probe 2");
+		m_valueRangeDictionary.set<string>("probeName_2", {"-", "Linear", "2D", "CPLA12875", "CPLA06475", "SingleElement"}, "-", "Probe 2");
 		
 		m_valueRangeDictionary.set<double>("startDepth", 0.0, 300.0, 0.0, "Start depth [mm]");
 		m_valueRangeDictionary.set<double>("endDepth", 0.0, 300.0, 70.0, "End depth [mm]");
@@ -1589,6 +1589,33 @@ namespace supra
 				if(txParameters.elementMap[activeElementIdxX][activeElementIdxY]) //should be true all the time, except we explicitly exclude elements
 				{
 					size_t muxedChanIdx = m_probeElementsToMuxedChannelIndices[transducerIndex][activeElementIdxX + elementLayout.x*activeElementIdxY];
+					txMap[muxedChanIdx] = true;
+				}
+			}
+		}
+
+		if (m_numProbes == 2 && m_probeNames[0] == "CPLA12875" && m_probeNames[1] == "SingleElement")
+		{
+			logging::log_error("ATTENTION: Active Element HACK in place!");
+
+			if (transducerIndex == 0) // If we are programming the imaging sequence on the linear array
+			{
+				uint32_t passiveTransducerIndex = 1;
+				for (size_t passiveElementIdx = 0; passiveElementIdx < m_probeElementsToMuxedChannelIndices[passiveTransducerIndex].size(); passiveElementIdx++)
+				{
+					size_t muxedChanIdx = m_probeElementsToMuxedChannelIndices[passiveTransducerIndex][passiveElementIdx];
+					txMap[muxedChanIdx] = true;
+				}
+			}
+
+			if (transducerIndex == 1) // If we are programming the active echo sequence on the single element transducer
+			{
+				uint32_t passiveTransducerIndex = 0;
+
+				// This selects the center 64 elements of the linear array for LISTENING
+				for (size_t passiveElementIdx = 32; passiveElementIdx < 96; passiveElementIdx++)
+				{
+					size_t muxedChanIdx = m_probeElementsToMuxedChannelIndices[passiveTransducerIndex][passiveElementIdx];
 					txMap[muxedChanIdx] = true;
 				}
 			}
