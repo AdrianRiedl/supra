@@ -25,6 +25,7 @@
 #include "InputOutput/RosImageOutputDevice.h"
 #include "InputOutput/UltrasoundInterfaceRawDataMock.h"
 #include "Beamformer/BeamformingNode.h"
+#include "Beamformer/BeamformingMVNode.h"
 #include "Beamformer/IQDemodulatorNode.h"
 #include "Beamformer/HilbertEnvelopeNode.h"
 #include "Beamformer/LogCompressorNode.h"
@@ -196,6 +197,9 @@ namespace supra
 		{ "ScanConverterNode",  [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<ScanConverterNode>(g, nodeID, queueing); } },
 		{ "TemporalFilterNode", [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<TemporalFilterNode>(g, nodeID, queueing); } },
 		{ "RawDelayNode",       [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<RawDelayNode>(g, nodeID, queueing); } },
+#endif
+#ifdef HAVE_BEAMFORMER_MINIMUM_VARIANCE
+		{ "BeamformingMVNode",  [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<BeamformingMVNode>(g, nodeID, queueing); } },
 #endif
 	};
 }
