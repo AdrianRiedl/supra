@@ -16,13 +16,13 @@
 					1
 				</param>
 				<param name="endDepth" type="double">
-					70
+					40
 				</param>
 				<param name="txFocusActive" type="bool">
 					1
 				</param>				
 				<param name="txFocusDepth" type="double">
-					40
+					25
 				</param>
 				<param name="txSectorAngleX" type="double">
 					60

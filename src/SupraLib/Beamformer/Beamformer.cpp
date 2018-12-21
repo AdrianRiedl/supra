@@ -192,6 +192,15 @@ namespace supra
 		m_txMaxApertureSize = txApertureSize;
 	}
 
+	void Beamformer::setSlidingAperturePositionFactor(const vec2 slidingAperturePositionFactor)
+	{
+		if (slidingAperturePositionFactor != m_slidingAperturePositionFactor)
+		{
+			m_ready = false;
+		}
+		m_slidingAperturePositionFactor = slidingAperturePositionFactor;
+	}
+
 	void Beamformer::setTxWindowType(const std::string windowType)
 	{
 		WindowType selectedTxWindowType = WindowRectangular;
@@ -360,6 +369,11 @@ namespace supra
 		return m_txMaxApertureSize;
 	}
 
+	vec2 Beamformer::getSlidingAperturePositionFactor() const
+	{
+		return m_slidingAperturePositionFactor;
+	}
+
 	bool Beamformer::getTxFocusActive() const
 	{
 		return m_txFocusActive;
@@ -513,12 +527,19 @@ namespace supra
 						vec2 scanlineStart;
 
 						// the scanline position in terms of elementIndices
+						//use factor between -1 and 1 here
 						vec2 scanlinePositionRelative;
-						scanlinePositionRelative =
-							static_cast<vec2>(vec2s{ scanlineIdxX, scanlineIdxY }) /
-							static_cast<vec2>(m_numScanlines - 1) *
-							static_cast<vec2>(elementLayout - m_maxApertureSize)
-							+ (m_maxApertureSize - 1) / 2;
+
+						// compute relative position. First with placement on the rectangle [(0,0) - (1,1)]
+						scanlinePositionRelative = static_cast<vec2>(vec2s{ scanlineIdxX, scanlineIdxY }) / static_cast<vec2>(m_numScanlines - 1);
+						// shift to rect [(-0.5, -0.5) - (0.5, 0.5)] for flipping / position stretching around probe face center
+						scanlinePositionRelative -= vec2{0.5, 0.5};
+						// Apply flip / strech / squeeze with factorX and factorY in [-1.0, 1.0]
+						scanlinePositionRelative *= m_slidingAperturePositionFactor;
+						// shift back
+						scanlinePositionRelative += vec2{0.5, 0.5};
+						// transfer from unit square to elementIndices, taking the aperturesize into account
+						scanlinePositionRelative *= static_cast<vec2>(elementLayout - m_maxApertureSize) + (static_cast<vec2>(m_maxApertureSize) - 1) / 2;
 
 						rect2s activeAperture = computeAperture(elementLayout, m_maxApertureSize, scanlinePositionRelative);
 						rect2s txAperture = computeAperture(elementLayout, m_txMaxApertureSize, scanlinePositionRelative);

@@ -205,7 +205,7 @@ namespace supra
 		size_t m_rxNumPlatformsToCopy;
 
 		bool m_writeMockData;
-		bool m_mockDataWritten;
+		std::vector<bool> m_mockDataWritten;
 		std::string m_mockDataFilename;
 
 		//TODO investigate whether use of those helps in reducing required bandwidth

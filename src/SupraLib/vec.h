@@ -233,6 +233,34 @@ namespace supra
 	__host__ __device__ inline vec2T<Ta> operator*(const vec2T<Ta>& a, const vec2T<Tb>& b) {
 		return vec2T<Ta>({ a.x * b.x, a.y * b.y });
 	}
+	/// Element-wise division of two-vectors
+	template <typename Ta, typename Tb>
+ 	__host__ __device__ inline vec2T<Ta>& operator /=(vec2T<Ta>& a, const vec2T<Tb>& b)
+	{
+		a = a / b;
+		return a;
+	}
+	/// Sum of two-vectors
+	template <typename Ta, typename Tb>
+	__host__ __device__ inline vec2T<Ta>& operator +=(vec2T<Ta>& a, const vec2T<Tb>& b)
+	{
+		a = a + b;
+		return a;
+	}
+	/// Difference of two-vectors
+	template <typename Ta, typename Tb>
+	__host__ __device__ inline vec2T<Ta>& operator -=(vec2T<Ta>& a, const vec2T<Tb>& b)
+	{
+		a = a - b;
+		return a;
+	}
+	/// Element-wise product of two-vectors
+	template <typename Ta, typename Tb>
+	__host__ __device__ inline vec2T<Ta>& operator *=(vec2T<Ta>& a, const vec2T<Tb>& b)
+	{
+		a = a * b;
+		return a;
+	}
 	/// Euclidean norm of a two-vector
 	template <typename Ta>
 	__host__ __device__ inline Ta norm(const vec2T<Ta>& a)
@@ -342,6 +370,34 @@ namespace supra
 	template <typename Ta, typename Tb>
 	__host__ __device__ inline vec3T<Ta> operator*(const vec3T<Ta>& a, const vec3T<Tb>& b) {
 		return vec3T<Ta>({ a.x * b.x, a.y * b.y, a.z * b.z });
+	}
+	/// Element-wise division of three-vectors
+	template <typename Ta, typename Tb>
+ 	__host__ __device__ inline vec3T<Ta>& operator /=(vec3T<Ta>& a, const vec3T<Tb>& b)
+	{
+		a = a / b;
+		return a;
+	}
+	/// Sum of three-vectors
+	template <typename Ta, typename Tb>
+	__host__ __device__ inline vec3T<Ta>& operator +=(vec3T<Ta>& a, const vec3T<Tb>& b)
+	{
+		a = a + b;
+		return a;
+	}
+	/// Difference of three-vectors
+	template <typename Ta, typename Tb>
+	__host__ __device__ inline vec3T<Ta>& operator -=(vec3T<Ta>& a, const vec3T<Tb>& b)
+	{
+		a = a - b;
+		return a;
+	}
+	/// Element-wise product of three-vectors
+	template <typename Ta, typename Tb>
+	__host__ __device__ inline vec3T<Ta>& operator *=(vec3T<Ta>& a, const vec3T<Tb>& b)
+	{
+		a = a * b;
+		return a;
 	}
 
 	/// Euclidean norm of a three-vector

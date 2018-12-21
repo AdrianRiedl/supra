@@ -153,7 +153,7 @@ namespace supra
 		, m_numChannelsTotal(0)
 		, m_probeMapping(0)
 		, m_systemRxClock(40)
-		, m_mockDataWritten(false)
+		, m_mockDataWritten(numPorts, false)
 		, m_numBeamSequences(0) // TODO replace hardcoded sequence number (move to config/gui)
 		, m_numReceivedFrames(0)
 		, m_numDroppedFrames(0)
@@ -281,6 +281,8 @@ namespace supra
 				m_valueRangeDictionary.remove(idApp+"apertureSizeY");
 				m_valueRangeDictionary.remove(idApp+"txApertureSizeX");
 				m_valueRangeDictionary.remove(idApp+"txApertureSizeY");
+				m_valueRangeDictionary.remove(idApp+"slidingAperturePositionFactorX");
+				m_valueRangeDictionary.remove(idApp+"slidingAperturePositionFactorY");
 				m_valueRangeDictionary.remove(idApp+"txFocusActive");
 				m_valueRangeDictionary.remove(idApp+"txFocusDepth");
 				m_valueRangeDictionary.remove(idApp+"txFocusWidth");
@@ -332,6 +334,8 @@ namespace supra
 			m_valueRangeDictionary.set<uint32_t>(idApp+"apertureSizeY", 0, 384, 0, descApp+"Aperture Y");
 			m_valueRangeDictionary.set<uint32_t>(idApp+"txApertureSizeX", 0, 384, 0, descApp+"TX Aperture X");
 			m_valueRangeDictionary.set<uint32_t>(idApp+"txApertureSizeY", 0, 384, 0, descApp+"TX Aperture Y");
+			m_valueRangeDictionary.set<double>(idApp+"slidingAperturePositionFactorX", -1.0, 1.0, 1.0, descApp+"Sliding Aperture pos factor X");
+			m_valueRangeDictionary.set<double>(idApp+"slidingAperturePositionFactorY", -1.0, 1.0, 1.0, descApp+"Sliding Aperture pos factor X");
 			m_valueRangeDictionary.set<string>(idApp+"txWindowType", {"Rectangular", "Hann", "Hamming","Gauss"}, "Rectangular", descApp+"TX apodization");
 			m_valueRangeDictionary.set<double>(idApp+"txWindowParameter", 0.0, 10.0, 0.0, descApp+"TxWindow parameter");			
 			m_valueRangeDictionary.set<bool>(idApp+"txFocusActive", {false, true}, true, descApp+"TX focus");
@@ -888,6 +892,11 @@ namespace supra
 			txApertureSize.y = m_configurationDictionary.get<uint32_t>(seqIdApp+"txApertureSizeY");
 			bf->setTxMaxApertureSize(txApertureSize);
 			
+			vec2 slidingAperturePositionFactor;
+			slidingAperturePositionFactor.x = m_configurationDictionary.get<double>(seqIdApp+"slidingAperturePositionFactorX");
+			slidingAperturePositionFactor.y = m_configurationDictionary.get<double>(seqIdApp+"slidingAperturePositionFactorY");
+			bf->setSlidingAperturePositionFactor(slidingAperturePositionFactor);
+
 			string windowType = m_configurationDictionary.get<string>(seqIdApp+"txWindowType");
 			bf->setTxWindowType(windowType);
 
@@ -1060,6 +1069,13 @@ namespace supra
 					txApertureSize.x = m_configurationDictionary.get<uint32_t>(seqIdApp+"txApertureSizeX");
 					txApertureSize.y = m_configurationDictionary.get<uint32_t>(seqIdApp+"txApertureSizeY");
 					bf->setTxMaxApertureSize( txApertureSize );
+				}
+				if(configKey == seqIdApp+"slidingAperturePositionFactorX" || configKey == seqIdApp+"slidingAperturePositionFactorX")
+				{
+					vec2 slidingAperturePositionFactor;
+					slidingAperturePositionFactor.x = m_configurationDictionary.get<double>(seqIdApp+"slidingAperturePositionFactorX");
+					slidingAperturePositionFactor.y = m_configurationDictionary.get<double>(seqIdApp+"slidingAperturePositionFactorY");
+					bf->setSlidingAperturePositionFactor(slidingAperturePositionFactor);
 				}
 				if(configKey == seqIdApp+"txFocusActive")
 				{
@@ -1445,6 +1461,9 @@ namespace supra
 			logging::log_log("UsIntCephasonicsCc: Setting rail A");
 		}
 		else {
+			logging::log_error("UsIntCephasonicsCc: Reported voltage range RailA: ", pC.RAILA_VOLTAGE_MIN, " - ", pC.RAILA_VOLTAGE_MAX, "V");
+			logging::log_error("UsIntCephasonicsCc: Reported voltage range RailB: ", pC.RAILB_VOLTAGE_MIN, " - ", pC.RAILB_VOLTAGE_MAX, "V");
+			logging::log_error("UsIntCephasonicsCc: Requested peak-peak voltage (bipolar equivalent): ", targetVoltage);
 			CS_THROW("Voltage not supported. Emergency stop!");
 		}
 
@@ -1775,10 +1794,10 @@ namespace supra
 					timestamp,
 					timestamp);
 
-				if(m_writeMockData && !m_mockDataWritten)
+				if(m_writeMockData && !m_mockDataWritten[linFrID])
 				{
-					rawData->getRxBeamformerParameters()->writeMetaDataForMock(m_mockDataFilename, const_pointer_cast<const USRawData>(rawData));
-					m_mockDataWritten = true;
+					rawData->getRxBeamformerParameters()->writeMetaDataForMock(m_mockDataFilename + "_" + std::to_string(linFrID), const_pointer_cast<const USRawData>(rawData));
+					m_mockDataWritten[linFrID] = true;
 				}
 
 				pData = make_shared<Container<int16_t> >(ContainerLocation::LocationGpu, ContainerFactory::getNextStream(), sArraySize);

@@ -1,0 +1,444 @@
+﻿<?xml version="1.0"?>
+<supra_config>
+	<devices>
+		<inputs>
+			<input type="UltrasoundInterfaceCephasonicsCC" id="US-Cep" ports="2">
+				<param name="sequenceNumFrames" type="uint32_t">
+					2
+				</param>
+				<!--<param name="txPulseType" type="string">
+					bipolar
+				</param>
+				<param name="txPulseInversion" type="bool">
+					0
+				</param>-->
+
+				<!--<param name="txNumCyclesManual" type="uint32_t">
+					3
+				</param>-->
+				<param name="endDepth" type="double">
+					70
+				</param>
+				<param name="probeName" type="string">
+					2D
+				</param> 
+				<param name="highPassFilterBypass" type="bool">
+					0
+				</param>
+				<param name="tgc0" type="double">
+					20
+				</param>
+				<param name="tgc1" type="double">
+					21
+				</param>
+				<param name="tgc2" type="double">
+					22
+				</param>
+				<param name="tgc3" type="double">
+					24
+				</param>
+				<param name="tgc4" type="double">
+					26
+				</param>
+				<param name="tgc5" type="double">
+					28
+				</param>
+				<param name="tgc6" type="double">
+					29
+				</param>
+				<param name="tgc7" type="double">
+					30
+				</param>
+				<param name="tgc8" type="double">
+					31
+				</param>
+				<param name="tgc9" type="double">
+					32
+				</param>
+				<param name="writeMockData" type="bool">
+					1
+				</param>
+				<param name="mockDataFilename" type="string">
+					scanlinePositionComparison.mock
+				</param>
+
+				<param name="seq0_txVoltage" type="double">
+					20
+				</param>
+				<param name="seq0_txPulseType" type="string">
+					unipolar
+				</param>
+				<param name="seq0_txPulseInversion" type="bool">
+					1
+				</param>
+				<param name="seq0_txFocusActive" type="bool">
+					1
+				</param>
+				<param name="seq0_txFocusDepth" type="double">
+					40
+				</param>
+				<param name="seq0_txSectorAngleX" type="double">
+					30
+				</param>
+				<param name="seq0_txSectorAngleY" type="double">
+					30
+				</param>
+				<param name="seq0_txSteeringAngleX" type="double">
+					15
+				</param>
+				<param name="seq0_txSteeringAngleY" type="double">
+					15
+				</param>
+				<param name="seq0_numScanlinesX" type="uint32_t">
+					15
+				</param>
+				<param name="seq0_numScanlinesY" type="uint32_t">
+					9
+				</param>
+				<param name="seq0_rxScanlineSubdivisionX" type="uint32_t">
+					1
+				</param>
+				<param name="seq0_rxScanlineSubdivisionY" type="uint32_t">
+					1
+				</param>
+				<param name="seq0_numSamplesRecon" type="uint32_t">
+					2000
+				</param>
+				<param name="seq0_scanType" type="string">
+					biphased
+				</param> 
+				<param name="seq0_txWindowType" type="string">
+					Hamming
+				</param>
+				<param name="seq0_txWindowParameter" type="double">
+					1.0
+				</param>
+				<param name="seq0_txApertureSizeX" type="uint32_t">
+					0
+				</param>
+				<param name="seq0_txApertureSizeY" type="uint32_t">
+					0
+				</param>
+				<param name="seq0_slidingAperturePositionFactorX" type="double">
+					1.0
+				</param>
+				<param name="seq0_slidingAperturePositionFactorY" type="double">
+					1.0
+				</param>
+				<param name="seq0_txCorrectMatchingLayers" type="bool">
+					0
+				</param>
+
+
+				<param name="seq1_txVoltage" type="double">
+					20
+				</param>
+				<param name="seq1_txPulseType" type="string">
+					unipolar
+				</param>
+				<param name="seq1_txPulseInversion" type="bool">
+					1
+				</param>
+				<param name="seq1_txFocusActive" type="bool">
+					1
+				</param>
+				<param name="seq1_txFocusDepth" type="double">
+					40
+				</param>
+				<param name="seq1_txSectorAngleX" type="double">
+					30
+				</param>
+				<param name="seq1_txSectorAngleY" type="double">
+					30
+				</param>
+				<param name="seq1_txSteeringAngleX" type="double">
+					15
+				</param>
+				<param name="seq1_txSteeringAngleY" type="double">
+					15
+				</param>
+				<param name="seq1_numScanlinesX" type="uint32_t">
+					15
+				</param>
+				<param name="seq1_numScanlinesY" type="uint32_t">
+					9
+				</param>
+				<param name="seq1_rxScanlineSubdivisionX" type="uint32_t">
+					1
+				</param>
+				<param name="seq1_rxScanlineSubdivisionY" type="uint32_t">
+					1
+				</param>
+				<param name="seq1_numSamplesRecon" type="uint32_t">
+					2000
+				</param>
+				<param name="seq1_scanType" type="string">
+					biphased
+				</param> 
+				<param name="seq1_txWindowType" type="string">
+					Hamming
+				</param>
+				<param name="seq1_txWindowParameter" type="double">
+					1.0
+				</param>
+				<param name="seq1_txApertureSizeX" type="uint32_t">
+					0
+				</param>
+				<param name="seq1_txApertureSizeY" type="uint32_t">
+					0
+				</param>
+				<param name="seq1_slidingAperturePositionFactorX" type="double">
+					-1.0
+				</param>
+				<param name="seq1_slidingAperturePositionFactorY" type="double">
+					-1.0
+				</param>
+				<param name="seq1_txCorrectMatchingLayers" type="bool">
+					0
+				</param>
+			</input>
+		</inputs>
+		<outputs>
+			<!--<output type="OpenIGTLinkOutputDevice" id="IGTL" />-->
+			<output type="MetaImageOutputDevice" id="MHD_Raw0">
+				<param name="createSequences" type="bool">
+					1
+				</param>
+				<param name="filename" type="string">
+					rawData_seq0
+				</param>
+			</output>
+			<output type="MetaImageOutputDevice" id="MHD_Raw1">
+				<param name="createSequences" type="bool">
+					1
+				</param>
+				<param name="filename" type="string">
+					rawData_seq1
+				</param>
+			</output>
+			<!--<output type="MetaImageOutputDevice" id="MHD_Raw">
+				<param name="createSequences" type="bool">
+					1
+				</param>
+				<param name="filename" type="string">
+					rawData
+				</param>
+			</output>
+			<output type="MetaImageOutputDevice" id="MHD_Beam">
+				<param name="createSequences" type="bool">
+					1
+				</param>
+				<param name="filename" type="string">
+					beamformed
+				</param>
+			</output>
+			<output type="MetaImageOutputDevice" id="MHD_Logc">
+				<param name="createSequences" type="bool">
+					1
+				</param>
+				<param name="filename" type="string">
+					Logcompressed
+				</param>
+			</output>-->
+			<!--<output type="MetaImageOutputDevice" id="MHD_Scan">
+				<param name="createSequences" type="bool">
+					1
+				</param>
+				<param name="filename" type="string">
+					images
+				</param>
+			</output>
+			<output type="MetaImageOutputDevice" id="MHD_ScanMask">
+				<param name="createSequences" type="bool">
+					0
+				</param>
+				<param name="filename" type="string">
+					imageMask
+				</param>
+			</output>-->
+		</outputs>
+		<nodes>
+			<node type="BeamformingNode" id="BEAM">
+				<param name="windowType" type="string">
+					Hamming
+				</param>
+				<param name="windowParameter" type="double">
+					0.5
+				</param>
+			</node>
+			<node type="BeamformingNode" id="BEAM2">
+				<param name="windowType" type="string">
+					Hamming
+				</param>
+				<param name="windowParameter" type="double">
+					0.5
+				</param>
+			</node>
+			<node type="TemporalFilterNode" id="FILT">
+				<param name="numImages" type="uint32_t">
+					8
+				</param>
+			</node>
+			<node type="TemporalFilterNode" id="FILT2">
+				<param name="numImages" type="uint32_t">
+					8
+				</param>
+			</node>
+			<node type="IQDemodulatorNode" id="DEMO">
+				<param name="decimation" type="uint32_t">
+					5
+				</param>
+				<param name="referenceFrequency" type="double">
+					7000000
+				</param>
+				<param name="weight" type="double">
+					1
+				</param>
+				<param name="referenceFrequencyAdd0" type="double">
+					6600000
+				</param>
+				<param name="weightAdd0" type="double">
+					1
+				</param>
+				<param name="referenceFrequencyAdd1" type="double">
+					7400000
+				</param>
+				<param name="weightAdd1" type="double">
+					1
+				</param>	
+				<param name="referenceFrequencyAdd2" type="double">
+					6000000
+				</param>
+				<param name="weightAdd2" type="double">
+					1
+				</param>
+				<param name="referenceFrequencyAdd3" type="double">
+					5000000
+				</param>
+				<param name="weightAdd3" type="double">
+					1
+				</param>
+			</node>
+			<node type="IQDemodulatorNode" id="DEMO2">
+				<param name="decimation" type="uint32_t">
+					5
+				</param>
+				<param name="referenceFrequency" type="double">
+					7000000
+				</param>
+				<param name="weight" type="double">
+					1
+				</param>
+				<param name="referenceFrequencyAdd0" type="double">
+					6600000
+				</param>
+				<param name="weightAdd0" type="double">
+					1
+				</param>
+				<param name="referenceFrequencyAdd1" type="double">
+					7400000
+				</param>
+				<param name="weightAdd1" type="double">
+					1
+				</param>	
+				<param name="referenceFrequencyAdd2" type="double">
+					6000000
+				</param>
+				<param name="weightAdd2" type="double">
+					1
+				</param>
+				<param name="referenceFrequencyAdd3" type="double">
+					5000000
+				</param>
+				<param name="weightAdd3" type="double">
+					1
+				</param>
+			</node>
+			<node type="LogCompressorNode" id="LOGC">
+				<param name="dynamicRange" type="double">
+					50
+				</param>
+			</node>
+			<node type="LogCompressorNode" id="LOGC2">
+				<param name="dynamicRange" type="double">
+					50
+				</param>
+			</node>
+			<node type="ScanConverterNode" id="SCAN">
+				<param name="imageResolutionForced" type="bool">
+					1
+				</param>
+				<param name="imageResolution" type="double">
+					0.18
+				</param>
+				<param name="outputType" type="DataType">
+					uint8
+				</param>
+			</node>
+			<node type="ScanConverterNode" id="SCAN2">
+				<param name="imageResolutionForced" type="bool">
+					1
+				</param>
+				<param name="imageResolution" type="double">
+					0.18
+				</param>
+				<param name="outputType" type="DataType">
+					uint8
+				</param>
+			</node>
+		</nodes>
+	</devices>
+	<connections>
+		<connection>
+			<from id="US-Cep" port="0" />
+			<to id="MHD_Raw0" port="0" />
+		</connection>
+		<connection>
+			<from id="US-Cep" port="1" />
+			<to id="MHD_Raw1" port="0" />
+		</connection>
+
+		<connection>
+			<from id="US-Cep" port="0" />
+			<to id="BEAM" port="0" />
+		</connection>
+		<connection>
+			<from id="BEAM" port="0" />
+			<to id="FILT" port="0" />
+		</connection>
+		<connection>
+			<from id="FILT" port="0" />
+			<to id="DEMO" port="0" />
+		</connection>
+		<connection>
+			<from id="DEMO" port="0" />
+			<to id="LOGC" port="0" />
+		</connection>
+		<connection>
+			<from id="LOGC" port="0" />
+			<to id="SCAN" port="0" />
+		</connection>
+		
+		<connection>
+			<from id="US-Cep" port="1" />
+			<to id="BEAM2" port="0" />
+		</connection>
+		<connection>
+			<from id="BEAM2" port="0" />
+			<to id="FILT2" port="0" />
+		</connection>
+		<connection>
+			<from id="FILT2" port="0" />
+			<to id="DEMO2" port="0" />
+		</connection>
+		<connection>
+			<from id="DEMO2" port="0" />
+			<to id="LOGC2" port="0" />
+		</connection>
+		<connection>
+			<from id="LOGC2" port="0" />
+			<to id="SCAN2" port="0" />
+		</connection>
+	</connections>
+</supra_config>
+

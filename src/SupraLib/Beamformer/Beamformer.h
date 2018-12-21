@@ -102,6 +102,9 @@ namespace supra
 		/// Specify the maximum transmit aperture to be used for beamforming [channels x/y] 
 		void setTxMaxApertureSize (const vec2s txApertureSize);
 
+		/// Specify the scanline position factor for sliding apertures
+		void setSlidingAperturePositionFactor(const vec2 slidingAperturePositionFactor);
+
 		/// Activate transmit focusing
 		void setTxFocusActive(const bool txFocusActive);
 
@@ -132,6 +135,7 @@ namespace supra
 		vec2s getMaxTxElements() const;
 		vec2s getApertureSize () const;
 		vec2s getTxApertureSize () const;
+		vec2 getSlidingAperturePositionFactor() const;
 		bool getTxFocusActive() const;
 		double getTxFocusDepth() const;
 		double getTxFocusWidth() const;
@@ -190,6 +194,7 @@ namespace supra
 		vec2s m_numRxScanlines;     // updated internally
 		vec2s m_maxApertureSize;
 		vec2s m_txMaxApertureSize;
+		vec2 m_slidingAperturePositionFactor;
 
 		WindowType m_txWindow;
 		WindowFunction::ElementType m_txWindowParameter;
