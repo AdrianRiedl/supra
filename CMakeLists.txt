@@ -25,6 +25,7 @@ OPTION(SUPRA_WARNINGS_AS_ERRORS    "Treat all build warnings as errors (NOT on w
 OPTION(SUPRA_DOWNLOAD_SAMPLEDATA   "Whether sample data should be downloaded" ON)
 OPTION(SUPRA_CUDA                  "Use cuda in SUPRA"                 ON)
 OPTION(SUPRA_TORCH                 "Use pytorch in SUPRA"              OFF)
+OPTION(SUPRA_TENSORRT              "Use tensorrt in SUPRA"             ON)
 OPTION(SUPRA_BUILD_DOC             "Build doxygen documentation"       OFF)
 OPTION(SUPRA_INTERFACE_GRAPHIC     "Build Graphic Interface (QT)"      ON)
 OPTION(SUPRA_INTERFACE_GRAPHIC_CMD "Activate Console Output for GUI"   ON)

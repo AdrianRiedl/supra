@@ -37,6 +37,7 @@
 #include "Beamformer/RxEventLimiterNode.h"
 #include "Processing/TimeGainCompensationNode.h"
 #include "Processing/TorchNode.h"
+#include "Processing/TensorRtNode.h"
 #include "StreamSyncNode.h"
 #include "TemporalOffsetNode.h"
 #include "StreamSynchronizer.h"
@@ -191,6 +192,9 @@ namespace supra
 #endif
 #ifdef HAVE_TORCH
 		{ "TorchNode",                [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<TorchNode>(g, nodeID, queueing); } },
+#endif
+#ifdef HAVE_TENSORRT
+        { "TensorRtNode",                [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<TensorRtNode>(g, nodeID, queueing); } },
 #endif
 #ifdef HAVE_CUFFT
 		{ "HilbertEnvelopeNode", [](tbb::flow::graph& g, std::string nodeID, bool queueing) { return make_shared<HilbertEnvelopeNode>(g, nodeID, queueing); } },
