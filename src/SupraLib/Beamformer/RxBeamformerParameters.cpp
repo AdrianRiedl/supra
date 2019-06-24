@@ -112,7 +112,7 @@ namespace supra
 		if (!f.good())
 		{
 			logging::log_error("RxBeamformerParameters: Error opening mock file ", mockMetadataFilename);
-			return nullptr;
+			throw std::runtime_error("RxBeamformerParameters: Error opening mock file.");
 		}
 
 		std::shared_ptr<USRawData> rawData;
