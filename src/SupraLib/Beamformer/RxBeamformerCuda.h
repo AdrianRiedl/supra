@@ -32,6 +32,7 @@ namespace supra
 			DelayAndSum,
 			DelayAndStdDev,
 			TestSignal,
+			DelayMultiplyAndSum,
 			INVALID
 		};
 
