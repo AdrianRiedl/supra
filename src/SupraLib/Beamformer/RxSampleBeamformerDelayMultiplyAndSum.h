@@ -42,92 +42,37 @@ namespace supra {
             return 0;
         }
 
-        /*
-         * Similar beamforming as above but changing the x and y axis
+        /*!
+         * Implementation of the Delay Multiply and Sum algorithm according to the paper
+         * 'Signed Real-Time Delay Multiply and Sum Beamforming for Multispectral Photoacoustic Imaging' (source: https://www.researchgate.net/publication/328335303_Signed_Real-Time_Delay_Multiply_and_Sum_Beamforming_for_Multispectral_Photoacoustic_Imaging)
+         *
+         * Still need to find out, which version is the best.
+         * My favorite would be version 1 with version 3.
+         *
+         *
+         * @tparam interpolateRFlines
+         * @tparam RFType
+         * @tparam ResultType
+         * @tparam LocationType
+         * @param txParams
+         * @param RF                                   Pointer to the raw data which needs to be beamformed
+         * @param numTransducerElements
+         * @param numReceivedChannels
+         * @param numTimesteps
+         * @param x_elemsDT
+         * @param scanline_x
+         * @param dirX
+         * @param dirY
+         * @param dirZ
+         * @param aDT
+         * @param depth
+         * @param invMaxElementDistance
+         * @param speedOfSound                          The speed of sound in this tissue
+         * @param dt
+         * @param additionalOffset
+         * @param windowFunction
+         * @return                                      The value of the beamformed raw data.
          */
-
-        template<bool interpolateRFlines, typename RFType, typename ResultType, typename LocationType>
-        static __device__ ResultType sampleBeamform3DYX(
-            ScanlineRxParameters3D::TransmitParameters txParams,
-            const RFType *RF,
-            vec2T<uint32_t> elementLayout,
-            uint32_t numReceivedChannels,
-            uint32_t numTimesteps,
-            const LocationType *x_elemsDTsh,
-            const LocationType *z_elemsDTsh,
-            LocationType scanline_x,
-            LocationType scanline_z,
-            LocationType dirX,
-            LocationType dirY,
-            LocationType dirZ,
-            LocationType aDT,
-            LocationType depth,
-            vec2f invMaxElementDistance,
-            LocationType speedOfSound,
-            LocationType dt,
-            int32_t additionalOffset,
-            const WindowFunctionGpu *windowFunction,
-            const WindowFunction::ElementType *functionShared
-        )
-        {
-            return 0;
-        }
-
-        template<bool interpolateRFlines, typename RFType, typename ResultType, typename LocationType>
-        static __device__ ResultType sampleBeamform3DCombined(
-            ScanlineRxParameters3D::TransmitParameters txParams,
-            const RFType *RF,
-            vec2T<uint32_t> elementLayout,
-            uint32_t numReceivedChannels,
-            uint32_t numTimesteps,
-            const LocationType *x_elemsDTsh,
-            const LocationType *z_elemsDTsh,
-            LocationType scanline_x,
-            LocationType scanline_z,
-            LocationType dirX,
-            LocationType dirY,
-            LocationType dirZ,
-            LocationType aDT,
-            LocationType depth,
-            vec2f invMaxElementDistance,
-            LocationType speedOfSound,
-            LocationType dt,
-            int32_t additionalOffset,
-            const WindowFunctionGpu *windowFunction,
-            const WindowFunction::ElementType *functionShared
-        )
-        {
-            return 0;
-        }
-
-        template<bool interpolateRFlines, typename RFType, typename ResultType, typename LocationType>
-        static __device__ ResultType sampleBeamform3DDelayMultiplyAndSum(
-            ScanlineRxParameters3D::TransmitParameters txParams,
-            const RFType *RF,
-            vec2T<uint32_t> elementLayout,
-            uint32_t numReceivedChannels,
-            uint32_t numTimesteps,
-            const LocationType *x_elemsDTsh,
-            const LocationType *z_elemsDTsh,
-            LocationType scanline_x,
-            LocationType scanline_z,
-            LocationType dirX,
-            LocationType dirY,
-            LocationType dirZ,
-            LocationType aDT,
-            LocationType depth,
-            vec2f invMaxElementDistance,
-            LocationType speedOfSound,
-            LocationType dt,
-            int32_t additionalOffset,
-            const WindowFunctionGpu *windowFunction,
-            const WindowFunction::ElementType *functionShared
-        )
-        {
-            return 0;
-        }
-
-
         template<bool interpolateRFlines, typename RFType, typename ResultType, typename LocationType>
         static __device__ ResultType sampleBeamform2D(
             ScanlineRxParameters3D::TransmitParameters txParams,
@@ -151,74 +96,53 @@ namespace supra {
         {
             float sample = 0.0f;
             float weightAcum = 0.0f;
-            int numAdds = 0;
             LocationType initialDelay = txParams.initialDelay;
             uint32_t txScanlineIdx = txParams.txScanlineIdx;
-            uint32_t txScanSize = txParams.lastActiveElementIndex.x - txParams.firstActiveElementIndex.x + 1;
+            int32_t numAcc = 0;
 
-            for(int32_t i = 0; i< txScanSize; i++) {
-                int32_t channelIdx = (txScanSize + i) % numReceivedChannels;
-                LocationType x_elem = x_elemsDT[txParams.firstActiveElementIndex.x + i];
-                int32_t sign = 1;
-                if (abs(x_elem - scanline_x) <= aDT) {
-                    float weight = windowFunction->get((x_elem - scanline_x) * invMaxElementDistance);
-                    weightAcum += weight;
-                    numAdds++;
-                    if (interpolateRFlines) {
-                        LocationType delayf = initialDelay +
-                                              computeDelayDTSPACE_D(dirX, dirY, dirZ, x_elem, scanline_x, depth) +
-                                              additionalOffset;
-                        int32_t
-                        delay = static_cast<int32_t>(floor(delayf));
-                        delayf -= delay;
-                        if (delay < (numTimesteps - 1)) {
-                            uint32_t position = delay + channelIdx * numTimesteps + txScanlineIdx * numReceivedChannels * numTimesteps;
-                            float newValue = RF[position + i] * RF[position + ((i+1) % txScanSize)];
-                            if(newValue < 0) {
-                                sign = -1;
-                            } else {
-                                sign = 1;
-                            }
-                            newValue = std::abs(newValue);
-                            newValue = std::sqrt(newValue);
-                            sample += (sign * newValue);
-                        } else if (delay < numTimesteps && delayf == 0.0) {
-                            uint32_t position = delay + channelIdx * numTimesteps + txScanlineIdx * numReceivedChannels * numTimesteps;
-                            float newValue = RF[position + i] * RF[position + ((i+1) % txScanSize)];
-                            if(newValue < 0) {
-                                sign = -1;
-                                newValue *= (-1);
-                            } else {
-                                sign = 1;
-                            }
-                            newValue = std::sqrt(newValue);
-                            sample += (sign * newValue);
-                        }
-                    } else {
-                        int32_t
-                        delay = static_cast<int32_t>(round(
-                                initialDelay + computeDelayDTSPACE_D(dirX, dirY, dirZ, x_elem, scanline_x, depth)) +
-                                                     additionalOffset);
-                        if (delay < numTimesteps) {
-                            uint32_t position = delay + channelIdx * numTimesteps + txScanlineIdx * numReceivedChannels * numTimesteps;
-                            float newValue = RF[position + i] * RF[position + ((i+1) % txScanSize)];
-                            if(newValue < 0) {
-                                sign = -1;
-                                newValue *= (-1);
-                            } else {
-                                sign = 1;
-                            }
-                            newValue = std::sqrt(newValue);
-                            sample += (sign * newValue);
-                        }
-                    }
+            for (int32_t elemIdxX = txParams.firstActiveElementIndex.x;
+                 elemIdxX < txParams.lastActiveElementIndex.x - 1; elemIdxX++) {
+                int32_t
+                channelIdx = elemIdxX % numReceivedChannels;
+                LocationType x_elem = x_elemsDT[elemIdxX];
+                LocationType delayfxElem = initialDelay +
+                                           computeDelayDTSPACE_D(dirX, dirY, dirZ, x_elem, scanline_x, depth) +
+                                           additionalOffset;
+                int32_t delayElem = static_cast<int32_t>(floor(delayfxElem));
+                float weightxElem = windowFunction->get((x_elem - scanline_x) * invMaxElementDistance);
+                float RFxElem = RF[delayElem + channelIdx * numTimesteps +
+                                   txScanlineIdx * numReceivedChannels * numTimesteps];
+                float RFxElemModified = (RFxElem < 0) ? ((-1) * std::sqrt(std::abs(RFxElem))) : (std::sqrt(RFxElem));
+                for (int32_t elemIdxXShift = elemIdxX + 1;
+                     elemIdxXShift < txParams.lastActiveElementIndex.x; elemIdxXShift++) {
+                    int32_t
+                    channelIdxShift = elemIdxXShift % numReceivedChannels;
+                    LocationType x_elemShift = x_elemsDT[elemIdxXShift];
+                    LocationType delayfxElemShift = initialDelay +
+                                                    computeDelayDTSPACE_D(dirX, dirY, dirZ, x_elemShift, scanline_x, depth) +
+                                                    additionalOffset;
+                    int32_t delayElemShift = static_cast<int32_t>(floor(delayfxElemShift));
+                    float weightxElemShift = windowFunction->get((x_elemShift - scanline_x) * invMaxElementDistance);
+                    float RFxElemShift = RF[delayElemShift + channelIdxShift * numTimesteps +
+                                            txScanlineIdx * numReceivedChannels * numTimesteps];
+                    float RFxElemShiftedModified = (RFxElemShift < 0) ? ((-1) * std::sqrt(std::abs(RFxElemShift)))
+                                                                      : (std::sqrt(RFxElemShift));
+                    //version 1: similar quality to DAS but a bit brighter
+                    sample += RFxElemModified * RFxElemShiftedModified * weightxElem * weightxElemShift;
+                    //version 2: very very bright compared to DAS
+                    //sample += RFxElemModified * RFxElemShiftedModified;
+
+
+                    numAcc++;
+                    weightAcum += weightxElemShift * weightxElem;
                 }
             }
-            if (numAdds > 0) {
-                return sample;// / weightAcum * numAdds;
-            } else {
-                return 0;
-            }
+            //Version 4: Especially good when the weight is used for calculations too (Version 1)
+            //           When Version 2 the picture is pretty bright.
+            //return sample;
+
+            //Version 3: compatible with version 1 and version 2 (version 1 image quality is pretty good in my opinion)
+            return sample / numAcc * weightAcum;
         }
     };
 }

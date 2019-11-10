@@ -44,7 +44,7 @@ namespace supra {
                                            "RxWindow");
         m_valueRangeDictionary.set<double>("windowParameter", 0.0, 10.0, 0.0, "RxWindow parameter");
         m_valueRangeDictionary.set<double>("speedOfSound", 1000, 2000, 1540.0, "Speed of sound [m/s]");
-        m_valueRangeDictionary.set<string>("beamformerType", {"DelayAndSum", "DelayAndStdDev", "TestSignal", "DelayMultiplyAndSum"},
+        m_valueRangeDictionary.set<string>("beamformerType", {"DelayAndSum", "DelayAndStdDev", "TestSignal", "DelayMultiplyAndSum", "DelaySignedMultiplyAndSum"},
                                            "DelayAndSum", "RxBeamformer");
         m_valueRangeDictionary.set<bool>("interpolateTransmits", {false, true}, false, "Interpolate Transmits");
         m_valueRangeDictionary.set<int32_t>("additionalOffset", -1000, 1000, 0, "Additional Offset [Samples]");
@@ -92,6 +92,8 @@ namespace supra {
         switch (m_outputType) {
             case supra::TypeInt16:
                 logging::log_info("Calling performRxBeamforming at TypeInt16");
+                // This function call links directly to the funcion performRxBeamforming in the corresponding RxBeamformer class.
+                // See the files RxBeamformerCuda, RxBeamformerMV, RxBeamformerMVpcg.
                 return m_beamformer->performRxBeamforming<InputType, int16_t>(
                         m_beamformerType, pRawData, m_fNumber, m_speedOfSoundMMperS,
                         m_windowType, static_cast<WindowFunction::ElementType>(m_windowParameter),
@@ -99,6 +101,8 @@ namespace supra {
                 break;
             case supra::TypeFloat:
                 logging::log_info("Calling performRxBeamforming at TypeFloat");
+                // This function call links directly to the funcion performRxBeamforming in the corresponding RxBeamformer class.
+                // See the files RxBeamformerCuda, RxBeamformerMV, RxBeamformerMVpcg!
                 return m_beamformer->performRxBeamforming<InputType, float>(
                         m_beamformerType, pRawData, m_fNumber, m_speedOfSoundMMperS,
                         m_windowType, static_cast<WindowFunction::ElementType>(m_windowParameter),
@@ -134,10 +138,12 @@ namespace supra {
                 switch (pRawData->getDataType()) {
                     case TypeFloat:
                         logging::log_info("Calling beamformTemplated at float");
+                        // Calling beamformTemplated (this class) with InputType float
                         pImageRF = beamformTemplated<float>(pRawData);
                         break;
                     case TypeInt16:
                         logging::log_info("Calling beamformTemplated at int16_t");
+                        // Calling beamformTemplated (this class) with InputType int16_t
                         pImageRF = beamformTemplated<int16_t>(pRawData);
                         break;
                     default:
@@ -182,6 +188,8 @@ namespace supra {
             m_beamformerType = RxBeamformerCuda::TestSignal;
         } else if (beamformer == "DelayMultiplyAndSum") {
             m_beamformerType = RxBeamformerCuda::DelayMultiplyAndSum;
+        } else if (beamformer == "DelaySignedMultiplyAndSum") {
+            m_beamformerType = RxBeamformerCuda::DelaySignedMultiplyAndSum;
         }
     }
 

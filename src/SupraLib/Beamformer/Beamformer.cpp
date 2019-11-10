@@ -715,9 +715,7 @@ namespace supra {
         return &m_txParameters;
     }
 
-    std::shared_ptr <std::vector<std::vector < ScanlineRxParameters3D>> >
-
-    Beamformer::getRxParameters() {
+    std::shared_ptr <std::vector<std::vector < ScanlineRxParameters3D>> > Beamformer::getRxParameters() {
         return m_rxParameters;
     }
 
@@ -732,9 +730,6 @@ namespace supra {
         }
         return m_pRxBeamformerParameters;
     }
-
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     ScanlineTxParameters3D Beamformer::getTxScanline3D(
             rect2s activeAperture,
@@ -882,7 +877,6 @@ namespace supra {
                 }
             }
         } else {
-            //////////// TODO Start here to think about a solution
             // without focus
             double maxTransitTime = 0;
             for (auto t : cornerElements) {

@@ -13,6 +13,7 @@
 #include "USRawData.h"
 #include "RxSampleBeamformerDelayAndSum.h"
 #include "RxSampleBeamformerDelayMultiplyAndSum.h"
+#include "RxSampleBeamformerSignedDelayMultiplyAndSum.h"
 #include "RxSampleBeamformerDelayAndStdDev.h"
 #include "RxSampleBeamformerTestSignal.h"
 #include "RxBeamformerCommon.h"
@@ -49,6 +50,13 @@ namespace supra {
     RxBeamformerCuda::~RxBeamformerCuda() {
     }
 
+    /*!
+     * TODO what does this function do exactly?
+     *
+     * @param dt
+     * @param speedOfSoundMMperS
+     * @param numTransducerElements
+     */
     void RxBeamformerCuda::convertToDtSpace(double dt, double speedOfSoundMMperS, size_t numTransducerElements) const {
         if (m_lastSeenDt != dt || m_speedOfSoundMMperS != speedOfSoundMMperS) {
             double oldFactor = 1;
@@ -101,6 +109,37 @@ namespace supra {
         }
     }
 
+    /*!
+     * TODO what does this function do exactly?
+     * The result is written to the corresponding position in the memory which can be addressed by s.
+     *
+     * @tparam SampleBeamformer
+     * @tparam interpolateRFlines               boolean about interpolated RF lines
+     * @tparam interpolateBetweenTransmits      boolean about interpolation between the transmits
+     * @tparam maxNumElements
+     * @tparam maxNumFunctionElements
+     * @tparam RFType
+     * @tparam ResultType
+     * @tparam LocationType
+     * @param numTransducerElements
+     * @param elementLayout
+     * @param numReceivedChannels
+     * @param numTimesteps
+     * @param RF                                pointer to the raw data container
+     * @param numTxScanlines                    number of transmitting scanlines
+     * @param numRxScanlines                    number of receiving scanlines
+     * @param scanlinesDT
+     * @param numDs
+     * @param dsDT
+     * @param x_elemsDT
+     * @param z_elemsDT
+     * @param speedOfSound                      speed of the sound in the tissue
+     * @param dt
+     * @param additionalOffset
+     * @param F
+     * @param windowFunction
+     * @param s                                 pointer to the allocated memory for the results
+     */
     template<class SampleBeamformer, bool interpolateRFlines, bool interpolateBetweenTransmits, unsigned int maxNumElements, unsigned int maxNumFunctionElements, typename RFType, typename ResultType, typename LocationType>
     __global__
     void rxBeamformingDTSPACE3DKernel(
@@ -211,7 +250,33 @@ namespace supra {
             s[scanlineIdx + r * numRxScanlines] = clampCast<ResultType>(sInterp);
         }
     }
-
+    /*!
+     * TODO what does this function do exactly?
+     * The result is written to the corresponding position in the memory which can be addressed by s.
+     *
+     * @tparam SampleBeamformer
+     * @tparam interpolateRFlines               boolean about interpolated RF lines
+     * @tparam interpolateBetweenTransmits      boolean about interpolation between the transmits
+     * @tparam RFType
+     * @tparam ResultType
+     * @tparam LocationType
+     * @param numTransducerElements
+     * @param numReceivedChannels
+     * @param numTimesteps
+     * @param RF                                pointer to the raw data container
+     * @param numTxScanlines                    number of transmitting scanlines
+     * @param numRxScanlines                    number of receiving scanlines
+     * @param scanlinesDT
+     * @param numDs
+     * @param dsDT
+     * @param x_elemsDT
+     * @param speedOfSound                      speed of the sound in the tissue
+     * @param dt
+     * @param additionalOffset
+     * @param F
+     * @param windowFunction
+     * @param s                                 pointer to the allocated memory for the results
+     */
     template<class SampleBeamformer, bool interpolateRFlines, bool interpolateBetweenTransmits, typename RFType, typename ResultType, typename LocationType>
     __global__
     void rxBeamformingDTSPACEKernel(
@@ -290,7 +355,36 @@ namespace supra {
             s[scanlineIdx + r * numRxScanlines] = clampCast<ResultType>(sInterp);
         }
     }
-
+    /*!
+     * The function calls the corresponding templated rxBeamformingDTSPACEKernel function.
+     *
+     * @tparam SampleBeamformer
+     * @tparam maxWindowFunctionNumel
+     * @tparam RFType
+     * @tparam ResultType
+     * @tparam LocationType
+     * @param interpolateRFlines                boolean about interpolated RF lines
+     * @param interpolateBetweenTransmits       boolean about interpolation between the transmits
+     * @param numTransducerElements
+     * @param elementLayout
+     * @param numReceivedChannels
+     * @param numTimesteps
+     * @param RF                                pointer to the raw data container
+     * @param numTxScanlines                    number of transmitting scanlines
+     * @param numRxScanlines                    number of receiving scanlines
+     * @param scanlines
+     * @param numZs
+     * @param zs
+     * @param x_elems
+     * @param y_elems
+     * @param speedOfSound                      speed of the sound in the tissue
+     * @param dt
+     * @param additionalOffset
+     * @param F
+     * @param windowFunction
+     * @param stream
+     * @param s                                 pointer to the allocated memory for the results
+     */
     template<class SampleBeamformer, unsigned int maxWindowFunctionNumel, typename RFType, typename ResultType, typename LocationType>
     void rxBeamformingDTspaceCuda3D(
             bool interpolateRFlines,
@@ -359,6 +453,33 @@ namespace supra {
         cudaSafeCall(cudaPeekAtLastError());
     }
 
+    /*!
+     * The function calls the corresponding templated rxBeamformingDTSPACEKernel function.
+     *
+     * @tparam SampleBeamformer
+     * @tparam RFType
+     * @tparam ResultType
+     * @tparam LocationType
+     * @param interpolateRFlines                boolean about interpolated RF lines
+     * @param interpolateBetweenTransmits       boolean about interpolation between the transmits
+     * @param numTransducerElements
+     * @param numReceivedChannels
+     * @param numTimesteps
+     * @param RF                                pointer to the raw data container
+     * @param numTxScanlines
+     * @param numRxScanlines
+     * @param scanlines
+     * @param numZs
+     * @param zs
+     * @param x_elems
+     * @param speedOfSound                      speed of the sound in the tissue
+     * @param dt
+     * @param additionalOffset
+     * @param F
+     * @param windowFunction
+     * @param stream
+     * @param s                                 pointer to the allocated memory for the results
+     */
     template<class SampleBeamformer, typename RFType, typename ResultType, typename LocationType>
     void rxBeamformingDTspaceCuda(
             bool interpolateRFlines,
@@ -386,11 +507,13 @@ namespace supra {
                 static_cast<unsigned int>((numZs + blockSize.y - 1) / blockSize.y));
         if (interpolateRFlines) {
             if (interpolateBetweenTransmits) {
+                logging::log_info("Setting rxBeamformingDTSPACEKernel true, true");
                 rxBeamformingDTSPACEKernel<SampleBeamformer, true, true> << < gridSize, blockSize, 0, stream >> > (
                         numTransducerElements, numReceivedChannels, numTimesteps, RF,
                                 numTxScanlines, numRxScanlines, scanlines,
                                 numZs, zs, x_elems, speedOfSound, dt, additionalOffset, F, windowFunction, s);
             } else {
+                logging::log_info("Setting rxBeamformingDTSPACEKernel true, false");
                 rxBeamformingDTSPACEKernel<SampleBeamformer, true, false> << < gridSize, blockSize, 0, stream >> > (
                         numTransducerElements, numReceivedChannels, numTimesteps, RF,
                                 numTxScanlines, numRxScanlines, scanlines,
@@ -398,11 +521,13 @@ namespace supra {
             }
         } else {
             if (interpolateBetweenTransmits) {
+                logging::log_info("Setting rxBeamformingDTSPACEKernel false, true");
                 rxBeamformingDTSPACEKernel<SampleBeamformer, false, true> << < gridSize, blockSize, 0, stream >> > (
                         numTransducerElements, numReceivedChannels, numTimesteps, RF,
                                 numTxScanlines, numRxScanlines, scanlines,
                                 numZs, zs, x_elems, speedOfSound, dt, additionalOffset, F, windowFunction, s);
             } else {
+                logging::log_info("Setting rxBeamformingDTSPACEKernel false, false");
                 rxBeamformingDTSPACEKernel<SampleBeamformer, false, false> << < gridSize, blockSize, 0, stream >> > (
                         numTransducerElements, numReceivedChannels, numTimesteps, RF,
                                 numTxScanlines, numRxScanlines, scanlines,
@@ -412,6 +537,22 @@ namespace supra {
         cudaSafeCall(cudaPeekAtLastError());
     }
 
+
+    /*!
+     * The beamforming functions beamformingFunction3D and beamformingFunction2D are set according to the information in the GUI.
+     * The according beamforming function is exectued with the necessary data.
+     * The US image is created by using the values calculated by the beamforming function.
+     *
+     * @param sampleBeamformer                  defined in RxBeamformerCuda.h -> enumeration RxSampleBeamformer (DelayAndSum, DelayAndStdDev, DelayMultiplyAndSum, TestSignal)
+     * @param rawData                           Pointer to the raw data
+     * @param fNumber
+     * @param speedOfSoundMMperS                speed of the sound in the tissue (mm/s)
+     * @param windowType
+     * @param windowParameter
+     * @param interpolateBetweenTransmits       boolean about interpolation between the transmits
+     * @param additionalOffset
+     * @return                                  shared pointer to the USImage
+     */
     template<typename ChannelDataType, typename ImageDataType>
     shared_ptr <USImage> RxBeamformerCuda::performRxBeamforming(
             RxBeamformerCuda::RxSampleBeamformer sampleBeamformer,
@@ -440,31 +581,50 @@ namespace supra {
                     new WindowFunction(windowType, windowParameter, m_windowFunctionNumEntries));
         }
 
+        // Setting beamformingFunctions to Delay and Sum beamformer functions
+        // For function refer to the RxSampleBeamformerDelayAndSum.h
         auto beamformingFunction3D = &rxBeamformingDTspaceCuda3D<RxSampleBeamformerDelayAndSum, m_windowFunctionNumEntries, ChannelDataType, ImageDataType, LocationType>;
         auto beamformingFunction2D = &rxBeamformingDTspaceCuda<RxSampleBeamformerDelayAndSum, ChannelDataType, ImageDataType, LocationType>;
         switch (sampleBeamformer) {
             case DelayAndSum:
+                // Setting beamformingFunctions to Delay and Sum beamformer functions
+                // For function refers to the RxSampleBeamformerDelayAndSum.h
                 logging::log_info("Setting Delay and Sum beamformingFunction");
                 beamformingFunction3D = &rxBeamformingDTspaceCuda3D<RxSampleBeamformerDelayAndSum, m_windowFunctionNumEntries, ChannelDataType, ImageDataType, LocationType>;
                 beamformingFunction2D = &rxBeamformingDTspaceCuda<RxSampleBeamformerDelayAndSum, ChannelDataType, ImageDataType, LocationType>;
                 break;
             case DelayAndStdDev:
+                // Setting beamformingFunctions to Delay and Standard Deviation beamformer functions
+                // For function refers to the RxSampleBeamformerDelayAndStdDev.h
                 logging::log_info("Setting Delay and StdDev beamformingFunction");
                 beamformingFunction3D = &rxBeamformingDTspaceCuda3D<RxSampleBeamformerDelayAndStdDev, m_windowFunctionNumEntries, ChannelDataType, ImageDataType, LocationType>;
                 beamformingFunction2D = &rxBeamformingDTspaceCuda<RxSampleBeamformerDelayAndStdDev, ChannelDataType, ImageDataType, LocationType>;
                 break;
             case TestSignal:
+                // Setting beamformingFunctions to Test Signal beamformer functions
+                // For function refers to the RxSampleBeamformerTestSignal.h
                 logging::log_info("Setting TestSignal beamformingFunction");
                 beamformingFunction3D = &rxBeamformingDTspaceCuda3D<RxSampleBeamformerTestSignal, m_windowFunctionNumEntries, ChannelDataType, ImageDataType, LocationType>;
                 beamformingFunction2D = &rxBeamformingDTspaceCuda<RxSampleBeamformerTestSignal, ChannelDataType, ImageDataType, LocationType>;
                 break;
             case DelayMultiplyAndSum:
-                logging::log_info("Setting TestSignal beamformingFunction");
+                // Setting beamformingFunctions to Delay Multiply and Sum beamformer functions
+                // For function refers to the RxSampleBeamformerDelayMultiplyAndSum.h
+                logging::log_info("Setting Delay Multiply and Sum beamformingFunction");
                 beamformingFunction3D = &rxBeamformingDTspaceCuda3D<RxSampleBeamformerDelayMultiplyAndSum, m_windowFunctionNumEntries, ChannelDataType, ImageDataType, LocationType>;
                 beamformingFunction2D = &rxBeamformingDTspaceCuda<RxSampleBeamformerDelayMultiplyAndSum, ChannelDataType, ImageDataType, LocationType>;
                 break;
+            case DelaySignedMultiplyAndSum:
+                // Setting beamformingFunctions to Delay Multiply and Sum beamformer functions
+                // For function refers to the RxSampleBeamformerDelayMultiplyAndSum.h
+                logging::log_info("Setting Delay Multiply and Sum beamformingFunction");
+                beamformingFunction3D = &rxBeamformingDTspaceCuda3D<RxSampleBeamformerSignedDelayMultiplyAndSum, m_windowFunctionNumEntries, ChannelDataType, ImageDataType, LocationType>;
+                beamformingFunction2D = &rxBeamformingDTspaceCuda<RxSampleBeamformerSignedDelayMultiplyAndSum, ChannelDataType, ImageDataType, LocationType>;
+                break;
             case INVALID:
             default:
+                // Setting beamformingFunctions to Delay and Sum beamformer functions
+                // For function refers to the RxSampleBeamformerDelayAndSum.h
                 logging::log_info("Setting Invalid beamformingFunction");
                 beamformingFunction3D = &rxBeamformingDTspaceCuda3D<RxSampleBeamformerDelayAndSum, m_windowFunctionNumEntries, ChannelDataType, ImageDataType, LocationType>;
                 beamformingFunction2D = &rxBeamformingDTspaceCuda<RxSampleBeamformerDelayAndSum, ChannelDataType, ImageDataType, LocationType>;

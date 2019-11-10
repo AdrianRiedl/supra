@@ -270,34 +270,6 @@ namespace supra {
         }
 
         template<bool interpolateRFlines, typename RFType, typename ResultType, typename LocationType>
-        static __device__ ResultType sampleBeamform3DDelayMultiplyAndSum(
-            ScanlineRxParameters3D::TransmitParameters txParams,
-            const RFType *RF,
-            vec2T<uint32_t> elementLayout,
-            uint32_t numReceivedChannels,
-            uint32_t numTimesteps,
-            const LocationType *x_elemsDTsh,
-            const LocationType *z_elemsDTsh,
-            LocationType scanline_x,
-            LocationType scanline_z,
-            LocationType dirX,
-            LocationType dirY,
-            LocationType dirZ,
-            LocationType aDT,
-            LocationType depth,
-            vec2f invMaxElementDistance,
-            LocationType speedOfSound,
-            LocationType dt,
-            int32_t additionalOffset,
-            const WindowFunctionGpu *windowFunction,
-            const WindowFunction::ElementType *functionShared
-        )
-        {
-            return 0.0;
-        }
-
-
-        template<bool interpolateRFlines, typename RFType, typename ResultType, typename LocationType>
         static __device__ ResultType sampleBeamform2D(
             ScanlineRxParameters3D::TransmitParameters txParams,
             const RFType *RF,
@@ -322,13 +294,11 @@ namespace supra {
             float weightAcum = 0.0f;
             int numAdds = 0;
             LocationType initialDelay = txParams.initialDelay;
-            uint32_t
-            txScanlineIdx = txParams.txScanlineIdx;
+            uint32_t txScanlineIdx = txParams.txScanlineIdx;
 
             for (int32_t elemIdxX = txParams.firstActiveElementIndex.x;
                  elemIdxX < txParams.lastActiveElementIndex.x; elemIdxX++) {
-                int32_t
-                channelIdx = elemIdxX % numReceivedChannels;
+                int32_t channelIdx = elemIdxX % numReceivedChannels;
                 LocationType x_elem = x_elemsDT[elemIdxX];
                 if (abs(x_elem - scanline_x) <= aDT) {
                     float weight = windowFunction->get((x_elem - scanline_x) * invMaxElementDistance);
@@ -338,8 +308,7 @@ namespace supra {
                         LocationType delayf = initialDelay +
                                               computeDelayDTSPACE_D(dirX, dirY, dirZ, x_elem, scanline_x, depth) +
                                               additionalOffset;
-                        int32_t
-                        delay = static_cast<int32_t>(floor(delayf));
+                        int32_t delay = static_cast<int32_t>(floor(delayf));
                         delayf -= delay;
                         if (delay < (numTimesteps - 1)) {
                             sample +=
