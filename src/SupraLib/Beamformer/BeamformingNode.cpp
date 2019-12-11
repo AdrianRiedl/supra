@@ -44,7 +44,7 @@ namespace supra {
                                            "RxWindow");
         m_valueRangeDictionary.set<double>("windowParameter", 0.0, 10.0, 0.0, "RxWindow parameter");
         m_valueRangeDictionary.set<double>("speedOfSound", 1000, 2000, 1540.0, "Speed of sound [m/s]");
-        m_valueRangeDictionary.set<string>("beamformerType", {"DelayAndSum", "DelayAndStdDev", "TestSignal", "DelayMultiplyAndSum", "DelaySignedMultiplyAndSum"},
+        m_valueRangeDictionary.set<string>("beamformerType", {"DelayAndSum", "DelayAndStdDev", "TestSignal", "DelayMultiplyAndSum1", "DelayMultiplyAndSum2","DelayMultiplyAndSum3","DelayMultiplyAndSum4", "DelaySignedMultiplyAndSum"},
                                            "DelayAndSum", "RxBeamformer");
         m_valueRangeDictionary.set<bool>("interpolateTransmits", {false, true}, false, "Interpolate Transmits");
         m_valueRangeDictionary.set<int32_t>("additionalOffset", -1000, 1000, 0, "Additional Offset [Samples]");
@@ -188,7 +188,13 @@ namespace supra {
             m_beamformerType = RxBeamformerCuda::TestSignal;
         } else if (beamformer == "DelayMultiplyAndSum") {
             m_beamformerType = RxBeamformerCuda::DelayMultiplyAndSum;
-        } else if (beamformer == "DelaySignedMultiplyAndSum") {
+        } else if (beamformer == "DelaySignedMultiplyAndSum1") {
+            m_beamformerType = RxBeamformerCuda::DelayMultiplyAndSum2;
+        }else if (beamformer == "DelaySignedMultiplyAndSum2") {
+            m_beamformerType = RxBeamformerCuda::DelayMultiplyAndSum3;
+        }else if (beamformer == "DelaySignedMultiplyAndSum3") {
+            m_beamformerType = RxBeamformerCuda::DelayMultiplyAndSum4;
+        }else if (beamformer == "DelaySignedMultiplyAndSum4") {
             m_beamformerType = RxBeamformerCuda::DelaySignedMultiplyAndSum;
         }
     }
