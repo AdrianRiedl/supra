@@ -30,6 +30,9 @@ namespace supra
     public:
         enum RxSampleBeamformer {
             DelayAndSum,
+            DelayAndSumYX,
+            DelayAndSumXYYX,
+            DelayAndSumXYYXDivided,
             DelayAndStdDev,
             TestSignal,
             DelayMultiplyAndSum,

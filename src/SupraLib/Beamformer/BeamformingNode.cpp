@@ -45,7 +45,8 @@ BeamformingNode::BeamformingNode(tbb::flow::graph &graph, const std::string &nod
     m_valueRangeDictionary.set<string>("beamformerType",
                                        {"DelayAndSum", "DelayAndStdDev", "TestSignal", "DelayMultiplyAndSum1",
                                         "DelayMultiplyAndSum2", "DelayMultiplyAndSum3", "DelayMultiplyAndSum4",
-                                        "DelaySignedMultiplyAndSum"}, "DelayAndSum", "RxBeamformer");
+                                        "DelaySignedMultiplyAndSum", "DelayAndSumYX", "DelayAndSumXYYX", "DelayAndSumXYYXDivided"}, "DelayAndSum",
+                                       "RxBeamformer");
     m_valueRangeDictionary.set<bool>("interpolateTransmits", {false, true}, false, "Interpolate Transmits");
     m_valueRangeDictionary.set<int32_t>("additionalOffset", -1000, 1000, 0, "Additional Offset [Samples]");
     m_valueRangeDictionary.set<DataType>("outputType", {TypeFloat, TypeInt16}, TypeFloat, "Output type");
@@ -196,6 +197,12 @@ void BeamformingNode::readBeamformerType() {
         m_beamformerType = RxBeamformerCuda::DelayMultiplyAndSum4;
     } else if (beamformer == "DelaySignedMultiplyAndSum") {
         m_beamformerType = RxBeamformerCuda::DelaySignedMultiplyAndSum;
+    } else if (beamformer == "DelayAndSumYX") {
+        m_beamformerType = RxBeamformerCuda::DelayAndSumYX;
+    } else if (beamformer == "DelayAndSumXYYX") {
+        m_beamformerType = RxBeamformerCuda::DelayAndSumXYYX;
+    } else if (beamformer == "DelayAndSumXYYXDivided") {
+        m_beamformerType = RxBeamformerCuda::DelayAndSumXYYXDivided;
     }
 }
 

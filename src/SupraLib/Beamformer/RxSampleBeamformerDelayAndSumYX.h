@@ -9,8 +9,8 @@
 // 
 // ================================================================================================
 
-#ifndef __RXSAMPLEBEAMFORMERDELAYANDSUM_H__
-#define __RXSAMPLEBEAMFORMERDELAYANDSUM_H__
+#ifndef __RXSAMPLEBEAMFORMERDELAYANDSUMYX_H__
+#define __RXSAMPLEBEAMFORMERDELAYANDSUMYX_H__
 
 #include "USImageProperties.h"
 #include "WindowFunction.h"
@@ -19,7 +19,7 @@
 //TODO ALL ELEMENT/SCANLINE Y positons are actually Z! Change all variable names accordingly
 namespace supra {
 
-class RxSampleBeamformerDelayAndSum {
+class RxSampleBeamformerDelayAndSumYX {
     public:
     // The old implementation
     /*template<bool interpolateRFlines, typename RFType, typename ResultType, typename LocationType>
@@ -369,14 +369,14 @@ class RxSampleBeamformerDelayAndSum {
             const WindowFunction::ElementType *functionShared
     ) {
         // TODO Change here to test.
-        return sampleBeamform3DXY<interpolateRFlines, RFType, ResultType, LocationType>(txParams, RF, elementLayout, numReceivedChannels, numTimesteps, x_elemsDTsh,
-                                  z_elemsDTsh, scanline_x, scanline_z, dirX, dirY, dirZ, aDT, depth,
-                                  invMaxElementDistance, speedOfSound, dt, additionalOffset, windowFunction,
-                                  functionShared);
-        /*return sampleBeamform3DYX<interpolateRFlines, RFType, ResultType, LocationType>(txParams, RF, elementLayout, numReceivedChannels, numTimesteps, x_elemsDTsh,
+        /*return sampleBeamform3DXY<interpolateRFlines, RFType, ResultType, LocationType>(txParams, RF, elementLayout, numReceivedChannels, numTimesteps, x_elemsDTsh,
                                   z_elemsDTsh, scanline_x, scanline_z, dirX, dirY, dirZ, aDT, depth,
                                   invMaxElementDistance, speedOfSound, dt, additionalOffset, windowFunction,
                                   functionShared);*/
+        return sampleBeamform3DYX<interpolateRFlines, RFType, ResultType, LocationType>(txParams, RF, elementLayout, numReceivedChannels, numTimesteps, x_elemsDTsh,
+                                  z_elemsDTsh, scanline_x, scanline_z, dirX, dirY, dirZ, aDT, depth,
+                                  invMaxElementDistance, speedOfSound, dt, additionalOffset, windowFunction,
+                                  functionShared);
         /*return sampleBeamform3DCombined<interpolateRFlines, RFType, ResultType, LocationType>(txParams, RF, elementLayout, numReceivedChannels, numTimesteps, x_elemsDTsh,
                                         z_elemsDTsh, scanline_x, scanline_z, dirX, dirY, dirZ, aDT, depth,
                                         invMaxElementDistance, speedOfSound, dt, additionalOffset, windowFunction,
@@ -453,4 +453,4 @@ class RxSampleBeamformerDelayAndSum {
 };
 }
 
-#endif //!__RXSAMPLEBEAMFORMERDELAYANDSUM_H__
+#endif //!__RXSAMPLEBEAMFORMERDELAYANDSUMYX_H__

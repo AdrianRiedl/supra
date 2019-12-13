@@ -12,6 +12,8 @@
 #include "USImage.h"
 #include "USRawData.h"
 #include "RxSampleBeamformerDelayAndSum.h"
+#include "RxSampleBeamformerDelayAndSumYX.h"
+#include "RxSampleBeamformerDelayAndSumXYYX.h"
 #include "RxSampleBeamformerDelayMultiplyAndSum.h"
 #include "RxSampleBeamformerDelayMultiplyAndSum2.h"
 #include "RxSampleBeamformerDelayMultiplyAndSum3.h"
@@ -644,6 +646,21 @@ namespace supra {
                 logging::log_info("Setting Delay Multiply and Sum beamformingFunction");
                 beamformingFunction3D = &rxBeamformingDTspaceCuda3D<RxSampleBeamformerSignedDelayMultiplyAndSum, m_windowFunctionNumEntries, ChannelDataType, ImageDataType, LocationType>;
                 beamformingFunction2D = &rxBeamformingDTspaceCuda<RxSampleBeamformerSignedDelayMultiplyAndSum, ChannelDataType, ImageDataType, LocationType>;
+                break;
+            case DelayAndSumYX:
+                logging::log_info("Setting Delay and Sum YX beamformingFunction");
+                beamformingFunction3D = &rxBeamformingDTspaceCuda3D<RxSampleBeamformerSignedDelayMultiplyAndSumYX, m_windowFunctionNumEntries, ChannelDataType, ImageDataType, LocationType>;
+                beamformingFunction2D = &rxBeamformingDTspaceCuda<RxSampleBeamformerSignedDelayMultiplyAndSumYX, ChannelDataType, ImageDataType, LocationType>;
+                break;
+            case DelayAndSumXYYX:
+                logging::log_info("Setting Delay and Sum YX beamformingFunction");
+                beamformingFunction3D = &rxBeamformingDTspaceCuda3D<RxSampleBeamformerSignedDelayMultiplyAndSumXYYX, m_windowFunctionNumEntries, ChannelDataType, ImageDataType, LocationType>;
+                beamformingFunction2D = &rxBeamformingDTspaceCuda<RxSampleBeamformerSignedDelayMultiplyAndSumXYYX, ChannelDataType, ImageDataType, LocationType>;
+                break;
+            case DelayAndSumXYYXDivided:
+                logging::log_info("Setting Delay and Sum YX beamformingFunction");
+                beamformingFunction3D = &rxBeamformingDTspaceCuda3D<RxSampleBeamformerSignedDelayMultiplyAndSumXYYXDivided, m_windowFunctionNumEntries, ChannelDataType, ImageDataType, LocationType>;
+                beamformingFunction2D = &rxBeamformingDTspaceCuda<RxSampleBeamformerSignedDelayMultiplyAndSumXYYXDivided, ChannelDataType, ImageDataType, LocationType>;
                 break;
             case INVALID:
             default:
