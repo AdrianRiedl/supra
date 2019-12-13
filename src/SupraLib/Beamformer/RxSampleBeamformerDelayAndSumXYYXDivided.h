@@ -306,7 +306,7 @@ class RxSampleBeamformerDelayAndSumXYYXDivided {
             const WindowFunction::ElementType *functionShared
         )
     {
-        ResultType beamformedXY = sampleBeamform3D<interpolateRFlines, RFType, ResultType, LocationType>(txParams, RF,
+        ResultType beamformedXY = sampleBeamform3DXY<interpolateRFlines, RFType, ResultType, LocationType>(txParams, RF,
                                                                                                          elementLayout,
                                                                                                          numReceivedChannels,
                                                                                                          numTimesteps,
