@@ -1,6 +1,10 @@
+// ================================================================================================
 //
-// Created by Adrian Riedl on 2019-10-10.
+// If not explicitly stated: Copyright (C) 2019, all rights reserved,
+//      Adrian Riedl
+//      Email Adrian.Riedl@in.tum.de
 //
+// ================================================================================================
 
 #ifndef SUPRA_RXSAMPLEBEAMFORMERSIGNEDDELAYMULTIPLYANDSUM_H
 #define SUPRA_RXSAMPLEBEAMFORMERSIGNEDDELAYMULTIPLYANDSUM_H
@@ -42,11 +46,11 @@ namespace supra {
         }
 
         /*!
-         * Implementation of the signed Delay Multiply and Sum algorithm according to the paper
-         * 'Signed Real-Time Delay Multiply and Sum Beamforming for Multispectral Photoacoustic Imaging' (source: https://www.researchgate.net/publication/328335303_Signed_Real-Time_Delay_Multiply_and_Sum_Beamforming_for_Multispectral_Photoacoustic_Imaging)
+         * For beamforming, this algorithm evaluates the result by returning the DMAS result with the sign of the DAS.
          *
-         * Using the implemented beamforming function in RxSampleBeamformerDelayAndSum.h and RxSampleBeamformerDelayMultiplyAndSum.h.
-         *
+         * Implementation of the 2D Delay Multiply and Sum algorithm according to the paper
+         * 'Signed Real-Time Delay Multiply and Sum Beamforming for Multispectral Photoacoustic Imaging'
+         * (source: https://www.researchgate.net/publication/328335303_Signed_Real-Time_Delay_Multiply_and_Sum_Beamforming_for_Multispectral_Photoacoustic_Imaging)
          *
          * @tparam interpolateRFlines
          * @tparam RFType

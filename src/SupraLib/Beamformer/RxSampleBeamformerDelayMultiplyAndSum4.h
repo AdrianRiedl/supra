@@ -1,6 +1,10 @@
+// ================================================================================================
 //
-// Created by Adrian Riedl on 2019-10-01.
+// If not explicitly stated: Copyright (C) 2019, all rights reserved,
+//      Adrian Riedl
+//      Email Adrian.Riedl@in.tum.de
 //
+// ================================================================================================
 
 #ifndef SUPRA_RXSAMPLEBEAMFORMERDELAYMULTIPLYANDSUM4_H
 #define SUPRA_RXSAMPLEBEAMFORMERDELAYMULTIPLYANDSUM4_H
@@ -43,12 +47,13 @@ namespace supra {
         }
 
         /*!
-         * Implementation of the Delay Multiply and Sum algorithm according to the paper
-         * 'Signed Real-Time Delay Multiply and Sum Beamforming for Multispectral Photoacoustic Imaging' (source: https://www.researchgate.net/publication/328335303_Signed_Real-Time_Delay_Multiply_and_Sum_Beamforming_for_Multispectral_Photoacoustic_Imaging)
+         * This beamforming function does not consider the weights of the different elements.
+         * Summation is done without weights of the corresponding elements.
+         * The result is not normalized by the number of accumulations and not multiplied with the accumulated weights.
          *
-         * Still need to find out, which version is the best.
-         * My favorite would be version 1 with version 3.
-         *
+         * Implementation of the 2D Delay Multiply and Sum algorithm according to the paper
+         * 'Signed Real-Time Delay Multiply and Sum Beamforming for Multispectral Photoacoustic Imaging'
+         * (source: https://www.researchgate.net/publication/328335303_Signed_Real-Time_Delay_Multiply_and_Sum_Beamforming_for_Multispectral_Photoacoustic_Imaging)
          *
          * @tparam interpolateRFlines
          * @tparam RFType
@@ -102,8 +107,7 @@ namespace supra {
 
             for (int32_t elemIdxX = txParams.firstActiveElementIndex.x;
                  elemIdxX < txParams.lastActiveElementIndex.x - 1; elemIdxX++) {
-                int32_t
-                channelIdx = elemIdxX % numReceivedChannels;
+                int32_t channelIdx = elemIdxX % numReceivedChannels;
                 LocationType x_elem = x_elemsDT[elemIdxX];
                 LocationType delayfxElem = initialDelay +
                                            computeDelayDTSPACE_D(dirX, dirY, dirZ, x_elem, scanline_x, depth) +
@@ -115,34 +119,24 @@ namespace supra {
                 float RFxElemModified = (RFxElem < 0) ? ((-1) * std::sqrt(std::abs(RFxElem))) : (std::sqrt(RFxElem));
                 for (int32_t elemIdxXShift = elemIdxX + 1;
                      elemIdxXShift < txParams.lastActiveElementIndex.x; elemIdxXShift++) {
-                    int32_t
-                    channelIdxShift = elemIdxXShift % numReceivedChannels;
+                    int32_t channelIdxShift = elemIdxXShift % numReceivedChannels;
                     LocationType x_elemShift = x_elemsDT[elemIdxXShift];
                     LocationType delayfxElemShift = initialDelay +
                                                     computeDelayDTSPACE_D(dirX, dirY, dirZ, x_elemShift, scanline_x, depth) +
                                                     additionalOffset;
                     int32_t delayElemShift = static_cast<int32_t>(floor(delayfxElemShift));
-                    float weightxElemShift = windowFunction->get((x_elemShift - scanline_x) * invMaxElementDistance);
+                    //float weightxElemShift = windowFunction->get((x_elemShift - scanline_x) * invMaxElementDistance);
                     float RFxElemShift = RF[delayElemShift + channelIdxShift * numTimesteps +
                                             txScanlineIdx * numReceivedChannels * numTimesteps];
                     float RFxElemShiftedModified = (RFxElemShift < 0) ? ((-1) * std::sqrt(std::abs(RFxElemShift)))
                                                                       : (std::sqrt(RFxElemShift));
-                    //version 1: similar quality to DAS but a bit brighter
-                    //sample += RFxElemModified * RFxElemShiftedModified * weightxElem * weightxElemShift;
-                    //version 2: very very bright compared to DAS
                     sample += RFxElemModified * RFxElemShiftedModified;
 
-
                     numAcc++;
-                    weightAcum += weightxElemShift * weightxElem;
+                    //weightAcum += weightxElemShift * weightxElem;
                 }
             }
-            //Version 4: Especially good when the weight is used for calculations too (Version 1)
-            //           When Version 2 the picture is pretty bright.
             return sample;
-
-            //Version 3: compatible with version 1 and version 2 (version 1 image quality is pretty good in my opinion)
-            //return sample / numAcc * weightAcum;
         }
     };
 }

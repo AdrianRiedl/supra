@@ -7,7 +7,7 @@ By the [Chair for Computer Aided Medical Procedures](http://campar.in.tum.de/)
 
 [![TUM](http://campar.in.tum.de/files/goeblr/TUM_Web_Logo_blau.png "TUM Logo")](http://tum.de)
 
-Main contributors: 
+Main contributors:
 
 * R&uuml;diger G&ouml;bl
 * Dr. Christoph Hennersperger
@@ -20,7 +20,7 @@ Supported by [EDEN2020](http://eden2020.eu)
 A 2D and 3D Pipeline from Beamforming to B-mode
 ----------------
 
-**SUPRA** is an open-source pipeline for fully software 
+**SUPRA** is an open-source pipeline for fully software
 defined ultrasound processing for real-time applications.
 Covering everything from beamforming to output of B-Mode images, SUPRA
 can help reproducibility of results and allows modifications to the image acquisition.
@@ -64,7 +64,7 @@ Building
 * TBB
 * CUDA &ge; 10.0
 
-	
+
 ### Build instructions (Ubuntu 16.04 / 18.04)
 
 Install CUDA (&ge; 10.0) as described by NVIDIA https://developer.nvidia.com/cuda-downloads .
@@ -74,7 +74,7 @@ Keep in mind that the C++ host compiler has to be supported by the CUDA version.
 Build requirements
 
 	apt-get install cmake cmake-gui qt5-default libtbb-dev libopenigtlink-dev git
-	
+
 SUPRA
 
 	mkdir -p $HOME/git && cd $HOME/git #(or your favorite directory for repositories)
@@ -82,26 +82,26 @@ SUPRA
 	cd supra
 	mkdir -p build && cd build
 	cmake-gui ..
-	
+
 1. Configure
 2. For systems with multiple gcc versions, make sure to select one supported by the installed CUDA version
 3. You might need to specify the CUDA toolkit directory (usually "`/usr/local/cuda`")
 4. Configure & Generate, then close cmake and build
 5. Build SUPRA
-	
+
 	make -j5
-	
+
 6. Start SUPRA: See below
 
 ### Building with PyTorch inference (via libtorch)
 
 1. Download the stable libtorch for CUDA 10.0 from pytorch.org
-   
+
         https://download.pytorch.org/libtorch/cu100/libtorch-win-shared-with-deps-latest.zip
-        https://download.pytorch.org/libtorch/cu100/libtorch-shared-with-deps-latest.zip 
-   
+        https://download.pytorch.org/libtorch/cu100/libtorch-shared-with-deps-latest.zip
+
    Tested version: 1.1.0:
-   
+
         https://download.pytorch.org/libtorch/cu100/libtorch-win-shared-with-deps-1.1.0.zip
         https://download.pytorch.org/libtorch/cu100/libtorch-shared-with-deps-1.1.0.zip
 
@@ -111,7 +111,7 @@ SUPRA
 5. Point cmake to the libtorch you just extracted (e.g. `supra/external/libtorch/share/cmake/Torch` or `/opt/libtorch/share/cmake/Torch`)
 6. Configure and build
 =======
-	
+
 Demo (No US-system required!)
 ----------------
 
@@ -122,14 +122,14 @@ Change to your build directory. If you used the commands above, you can execute
 Start the SUPRA GUI with a demo config file
 
 	src/GraphicInterface/SUPRA_GUI -c data/configDemo.xml -a
-	
+
 Where `-c` defines the config file to load and `-a` is autostart.
 
 This shows a complete ultrasound pipeline running on your computer from raw channel data recorded with
 a Cephasonics system and a 7MHz linear probe.
 With the dropdown menu "Preview Node", you can select which stage of the pipeline to inspect.
 For the final state of the image, select "SCAN", which shows the output of the scan-converter - the B-mode.
-	
+
 Used libraries
 ----------------
 
@@ -143,7 +143,7 @@ On Linux, the usual ROS-libraries are used during build. (roscpp, geometry_msgs)
 **SUPRA** additionally uses the Intel Thread Building Blocks (but does not provide them) in their Apache 2.0 licensed form. https://www.threadingbuildingblocks.org/
 
 Finally, it can be built against
-	
+
 * QT (LGPLv3)
 * IGTL (BSD 3clause)
 * CAMPVis (Apache 2.0) (unfortunately, the respective QT5 version is not yet public)
@@ -156,7 +156,7 @@ REST interface instead of graphical interface
 Build requirements
 
 	apt-get install cmake cmake-gui libtbb-dev libopenigtlink-dev libcpprest-dev libboost-all-dev git
-	
+
 SUPRA
 
 	mkdir -p $HOME/git && cd $HOME/git #(or your favorite directory for repositories)
@@ -170,9 +170,9 @@ SUPRA
 3. You might need to specify the CUDA toolkit directory (usually "`/usr/local/cuda`")
 4. Configure & Generate, then close cmake and build
 5. Build SUPRA
-	
+
 	make -j5
-	
+
 6. Start SUPRA: See below
 
 #### Rest Interface Queries
@@ -184,7 +184,7 @@ The IP address / hostname SUPRA can be reached with is referred as `SUPRA_URL` b
 ##### GET REQUESTs
 
 `SUPRA_URL/nodes/[var]` where var can be `input` to return all input nodes, `output` to get only the output nodes and empty or `all` to return all nodes regardless of their types.
-The shape of the object in response's body will be 
+The shape of the object in response's body will be
 `{"nodeIDs":[String]}`.
 
 `SUPRA_URL/parameters` returns all parameters for one node.
@@ -212,7 +212,7 @@ Change to your build directory. If you used the commands above, you can execute
 Start the SUPRA GUI with a demo config file
 
 	src/RestInterface/SUPRA_REST data/configDemo.xml
-	
+
 Additionaly used libraries
 ----------------
 See above for most used libraries. This build uses additionally:
@@ -235,6 +235,63 @@ Build Requirements:
 The deb file can be found in the 'binpackages' folder.
 
 When installing the deb file in a system the package will try to build with the standard cmake configuration on that system.
+
+Implementation of Delay and Sum beamformer for 3D
+----------------
+For the implementation of the Delay Multiply and Sum beamformer refer to the header files in src/SupraLib/Beamformer/ starting with RxSampleBeamformerDelayAndSum:
+
+* RxSampleBeamformerDelayAndSum.h:
+    * **sampleBeamform2D()**: This method performs the Delay and Sum beamforming algorithm for 2D. This file has remained unchanged during the implementation of the changes of the 3D beamformer.
+    * **sampleBeamform3D()**: This method performs the Delay and Sum beamforming algorithm for 3D. This file has remained unchanged during the implementation of the changes of the 3D beamformer. The algorithm is designed to iterate over the X axis. During this iteration, the values along the Y axis are summed up (multiplied with the corresponding weights).
+
+* RxSampleBeamformerDelayAndSumYX.h:
+    * **sampleBeamform2D()**: Same function as sampleBeamform2D() in the class RxSampleBeamformerDelayAndSum
+    * **sampleBeamform3D()**: This method performs the Delay and Sum beamforming algorithm for 3D. Therefore, it call the function sampleBeamform3DYX() with the corresponding arguments.
+    * **sampleBeamform3DYX()**: The algorithm is designed to iterate over the Y axis. During this iteration, the values along the X axis are summed up (multiplied with the corresponding weights).
+
+* RxSampleBeamformerDelayAndSumXYYX.h:
+    * **sampleBeamform2D()**: Same function as sampleBeamform2D() in the class RxSampleBeamformerDelayAndSum
+    * **sampleBeamform3D()**: This method performs the Delay and Sum beamforming algorithm for 3D. Therefore, it call the function sampleBeamform3DXY() with the corresponding arguments, as well as the function sampleBeamform3DYX() with the corresponding arguments. The results are added and returned.
+    * **sampleBeamform3DXY()**: The algorithm is designed to iterate over the X axis. During this iteration, the values along the Y axis are summed up (multiplied with the corresponding weights).
+    * **sampleBeamform3DYX()**: The algorithm is designed to iterate over the Y axis. During this iteration, the values along the X axis are summed up (multiplied with the corresponding weights).
+ 
+* RxSampleBeamformerDelayAndSumXYYXDivided.h:
+    * **sampleBeamform2D()**: Same function as sampleBeamform2D() in the class RxSampleBeamformerDelayAndSum
+    * **sampleBeamform3D()**: This method performs the Delay and Sum beamforming algorithm for 3D. Therefore, it call the function sampleBeamform3DXY() with the corresponding arguments, as well as the function sampleBeamform3DYX() with the corresponding arguments. The results are added, divided by two and returned.
+    * **sampleBeamform3DXY()**: The algorithm is designed to iterate over the X axis. During this iteration, the values along the Y axis are summed up (multiplied with the corresponding weights).
+    * **sampleBeamform3DYX()**: The algorithm is designed to iterate over the Y axis. During this iteration, the values along the X axis are summed up (multiplied with the corresponding weights).
+
+Implementation of Delay Multiply and Sum beamformer
+----------------
+
+For the implementation of the Delay Multiply and Sum beamformer (according to [https://www.researchgate.net/publication/328335303_Signed_Real-Time_Delay_Multiply_and_Sum_Beamforming_for_Multispectral_Photoacoustic_Imaging](https://www.researchgate.net/publication/328335303_Signed_Real-Time_Delay_Multiply_and_Sum_Beamforming_for_Multispectral_Photoacoustic_Imaging)) refer to the header files in src/SupraLib/Beamformer/ starting with RxSampleBeamformerDelayMultiplyAndSum:
+
+* RxSampleBeamformerDelayMultiplyAndSum.h:
+    * **sampleBeamform2D()**: Implementation of the 2D DMAS beamformer considering the weights of the elements, as well as the normalization of the result with the number of accumulated elements and multiplied with the accumulated weights of the elements. For performing the beamforming, the algorithm iterates over the receiving window choosing one index as the active element. For this active element each of the remaining elements on its right side are multiplied with the value of the active element and the corresponding weights and then summed up. For the accumulated weight, the product of both the weight of the actual element and the element, which is iterated over, is summed up. In general, the method refers to the elements of the element, being iterated over, with the name affix 'Shift'.
+    * **sampleBeamform3D()**: Implementation of the 3D DMAS beamformer, adapted from the 2D DMAS beamformer, considering the weights of the elements, as well as the normalization of the result with the number of accumulated elements and multiplied with the accumulated weights of the elements. The algorithm is designed to iterate over the receiving window. Therefore, the algorithm picks an active element for which an subwindow is chosen, starting with at the next column and next row of the receiving window. Again, the value of active element, the element, which is iterated over and the corresponding weights are multiplies and summed. In general, the method refers to the elements of the element, being iterated over, with the name affix 'Shift'.
+
+* RxSampleBeamformerDelayMultiplyAndSum2.h:
+    * **sampleBeamform2D()**: Implementation of the 2D DMAS beamformer considering the weights of the elements, but without the normalization of the result with the number of accumulated elements and multiplied with the accumulated weights of the elements. For performing the beamforming, the algorithm iterates over the receiving window choosing one index as the active element. For this active element each of the remaining elements on its right side are multiplied with the value of the active element and the corresponding weights and then summed up. For the accumulated weight, the product of both the weight of the actual element and the element, which is iterated over, is summed up. In general, the method refers to the elements of the element, being iterated over, with the name affix 'Shift'.
+    * **sampleBeamform3D()**: Not implemented - use RxSampleBeamformerDelayMultiplyAndSum.
+
+* RxSampleBeamformerDelayMultiplyAndSum3.h:
+    * **sampleBeamform2D()**: Implementation of the 2D DMAS beamformer considering the weights of the elements, as well as the normalization of the result with the number of accumulated elements and multiplied with the accumulated weights of the elements. For performing the beamforming, the algorithm iterates over the receiving window choosing one index as the active element. For this active element each of the remaining elements on its right side are multiplied with the value of the active element and then summed up. For the accumulated weight, the product of both the weight of the actual element and the element, which is iterated over, is summed up. The difference is, that for the summation of the multiplied values the weights are not considered. In general, the method refers to the elements of the element, being iterated over, with the name affix 'Shift'.
+    * **sampleBeamform3D()**: Not implemented - use RxSampleBeamformerDelayMultiplyAndSum.
+
+* RxSampleBeamformerDelayMultiplyAndSum4.h:
+    * **sampleBeamform2D()**: Implementation of the 2D DMAS beamformer. For performing the beamforming, the algorithm iterates over the receiving window choosing one index as the active element. For this active element each of the remaining elements on its right side are multiplied with the value of the active element and then summed up. In this algorithm, neither weights are considered, nor normalization is performed. In general, the method refers to the elements of the element, being iterated over, with the name affix 'Shift'.
+    * **sampleBeamform3D()**: Not implemented - use RxSampleBeamformerDelayMultiplyAndSum.
+
+    
+Implementation of Signed Delay Multiply and Sum beamformer
+----------------
+
+For the implementation of the Siged Delay Multiply and Sum beamformer (according to [https://www.researchgate.net/publication/328335303_Signed_Real-Time_Delay_Multiply_and_Sum_Beamforming_for_Multispectral_Photoacoustic_Imaging](https://www.researchgate.net/publication/328335303_Signed_Real-Time_Delay_Multiply_and_Sum_Beamforming_for_Multispectral_Photoacoustic_Imaging)) refer to the header file in src/SupraLib/Beamformer/RxSampleBeamformerSignedDelayMultiplyAndSum.h:
+
+* RxSampleBeamformerDelayMultiplyAndSum4.h:
+    * **sampleBeamform2D()**: Implementation of the 2D SDMAS beamformer. For performing the beamforming, the algorithm returns the result of the Delay Multiply and Sum beamformer with the same sign as the result of the Delay and Sum beamformer would have.
+    * **sampleBeamform3D()**: Not implemented - use RxSampleBeamformerDelayMultiplyAndSum.
+
 
 Acknowledgement
 ----------------
