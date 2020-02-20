@@ -243,18 +243,15 @@ For the implementation of the Delay Multiply and Sum beamformer refer to the hea
 * RxSampleBeamformerDelayAndSum.h:
     * **sampleBeamform2D()**: This method performs the Delay and Sum beamforming algorithm for 2D. This file has remained unchanged during the implementation of the changes of the 3D beamformer.
     * **sampleBeamform3D()**: This method performs the Delay and Sum beamforming algorithm for 3D. This file has remained unchanged during the implementation of the changes of the 3D beamformer. The algorithm is designed to iterate over the X axis. During this iteration, the values along the Y axis are summed up (multiplied with the corresponding weights).
-
 * RxSampleBeamformerDelayAndSumYX.h:
     * **sampleBeamform2D()**: Same function as sampleBeamform2D() in the class RxSampleBeamformerDelayAndSum
     * **sampleBeamform3D()**: This method performs the Delay and Sum beamforming algorithm for 3D. Therefore, it call the function sampleBeamform3DYX() with the corresponding arguments.
     * **sampleBeamform3DYX()**: The algorithm is designed to iterate over the Y axis. During this iteration, the values along the X axis are summed up (multiplied with the corresponding weights).
-
 * RxSampleBeamformerDelayAndSumXYYX.h:
     * **sampleBeamform2D()**: Same function as sampleBeamform2D() in the class RxSampleBeamformerDelayAndSum
     * **sampleBeamform3D()**: This method performs the Delay and Sum beamforming algorithm for 3D. Therefore, it call the function sampleBeamform3DXY() with the corresponding arguments, as well as the function sampleBeamform3DYX() with the corresponding arguments. The results are added and returned.
     * **sampleBeamform3DXY()**: The algorithm is designed to iterate over the X axis. During this iteration, the values along the Y axis are summed up (multiplied with the corresponding weights).
     * **sampleBeamform3DYX()**: The algorithm is designed to iterate over the Y axis. During this iteration, the values along the X axis are summed up (multiplied with the corresponding weights).
- 
 * RxSampleBeamformerDelayAndSumXYYXDivided.h:
     * **sampleBeamform2D()**: Same function as sampleBeamform2D() in the class RxSampleBeamformerDelayAndSum
     * **sampleBeamform3D()**: This method performs the Delay and Sum beamforming algorithm for 3D. Therefore, it call the function sampleBeamform3DXY() with the corresponding arguments, as well as the function sampleBeamform3DYX() with the corresponding arguments. The results are added, divided by two and returned.
@@ -269,15 +266,12 @@ For the implementation of the Delay Multiply and Sum beamformer (according to [h
 * RxSampleBeamformerDelayMultiplyAndSum.h:
     * **sampleBeamform2D()**: Implementation of the 2D DMAS beamformer considering the weights of the elements, as well as the normalization of the result with the number of accumulated elements and multiplied with the accumulated weights of the elements. For performing the beamforming, the algorithm iterates over the receiving window choosing one index as the active element. For this active element each of the remaining elements on its right side are multiplied with the value of the active element and the corresponding weights and then summed up. For the accumulated weight, the product of both the weight of the actual element and the element, which is iterated over, is summed up. In general, the method refers to the elements of the element, being iterated over, with the name affix 'Shift'.
     * **sampleBeamform3D()**: Implementation of the 3D DMAS beamformer, adapted from the 2D DMAS beamformer, considering the weights of the elements, as well as the normalization of the result with the number of accumulated elements and multiplied with the accumulated weights of the elements. The algorithm is designed to iterate over the receiving window. Therefore, the algorithm picks an active element for which an subwindow is chosen, starting with at the next column and next row of the receiving window. Again, the value of active element, the element, which is iterated over and the corresponding weights are multiplies and summed. In general, the method refers to the elements of the element, being iterated over, with the name affix 'Shift'.
-
 * RxSampleBeamformerDelayMultiplyAndSum2.h:
     * **sampleBeamform2D()**: Implementation of the 2D DMAS beamformer considering the weights of the elements, but without the normalization of the result with the number of accumulated elements and multiplied with the accumulated weights of the elements. For performing the beamforming, the algorithm iterates over the receiving window choosing one index as the active element. For this active element each of the remaining elements on its right side are multiplied with the value of the active element and the corresponding weights and then summed up. For the accumulated weight, the product of both the weight of the actual element and the element, which is iterated over, is summed up. In general, the method refers to the elements of the element, being iterated over, with the name affix 'Shift'.
     * **sampleBeamform3D()**: Not implemented - use RxSampleBeamformerDelayMultiplyAndSum.
-
 * RxSampleBeamformerDelayMultiplyAndSum3.h:
     * **sampleBeamform2D()**: Implementation of the 2D DMAS beamformer considering the weights of the elements, as well as the normalization of the result with the number of accumulated elements and multiplied with the accumulated weights of the elements. For performing the beamforming, the algorithm iterates over the receiving window choosing one index as the active element. For this active element each of the remaining elements on its right side are multiplied with the value of the active element and then summed up. For the accumulated weight, the product of both the weight of the actual element and the element, which is iterated over, is summed up. The difference is, that for the summation of the multiplied values the weights are not considered. In general, the method refers to the elements of the element, being iterated over, with the name affix 'Shift'.
     * **sampleBeamform3D()**: Not implemented - use RxSampleBeamformerDelayMultiplyAndSum.
-
 * RxSampleBeamformerDelayMultiplyAndSum4.h:
     * **sampleBeamform2D()**: Implementation of the 2D DMAS beamformer. For performing the beamforming, the algorithm iterates over the receiving window choosing one index as the active element. For this active element each of the remaining elements on its right side are multiplied with the value of the active element and then summed up. In this algorithm, neither weights are considered, nor normalization is performed. In general, the method refers to the elements of the element, being iterated over, with the name affix 'Shift'.
     * **sampleBeamform3D()**: Not implemented - use RxSampleBeamformerDelayMultiplyAndSum.
@@ -288,7 +282,7 @@ Implementation of Signed Delay Multiply and Sum beamformer
 
 For the implementation of the Siged Delay Multiply and Sum beamformer (according to [https://www.researchgate.net/publication/328335303_Signed_Real-Time_Delay_Multiply_and_Sum_Beamforming_for_Multispectral_Photoacoustic_Imaging](https://www.researchgate.net/publication/328335303_Signed_Real-Time_Delay_Multiply_and_Sum_Beamforming_for_Multispectral_Photoacoustic_Imaging)) refer to the header file in src/SupraLib/Beamformer/RxSampleBeamformerSignedDelayMultiplyAndSum.h:
 
-* RxSampleBeamformerDelayMultiplyAndSum4.h:
+* RxSampleBeamformerSignedDelayMultiplyAndSum.h:
     * **sampleBeamform2D()**: Implementation of the 2D SDMAS beamformer. For performing the beamforming, the algorithm returns the result of the Delay Multiply and Sum beamformer with the same sign as the result of the Delay and Sum beamformer would have.
     * **sampleBeamform3D()**: Not implemented - use RxSampleBeamformerDelayMultiplyAndSum.
 
