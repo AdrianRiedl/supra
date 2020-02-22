@@ -236,9 +236,9 @@ The deb file can be found in the 'binpackages' folder.
 
 When installing the deb file in a system the package will try to build with the standard cmake configuration on that system.
 
-Implementation of Delay and Sum beamformer for 3D
+<!--Implementation of Delay and Sum beamformer for 3D
 ----------------
-For the implementation of the Delay Multiply and Sum beamformer refer to the header files in src/SupraLib/Beamformer/ starting with RxSampleBeamformerDelayAndSum:
+For the implementation of the Delay and Sum beamformer refer to the header files in src/SupraLib/Beamformer/ starting with RxSampleBeamformerDelayAndSum:
 
 * RxSampleBeamformerDelayAndSum.h:
     * **sampleBeamform2D()**: This method performs the Delay and Sum beamforming algorithm for 2D. This file has remained unchanged during the implementation of the changes of the 3D beamformer.
@@ -285,7 +285,7 @@ For the implementation of the Siged Delay Multiply and Sum beamformer (according
 * RxSampleBeamformerSignedDelayMultiplyAndSum.h:
     * **sampleBeamform2D()**: Implementation of the 2D SDMAS beamformer. For performing the beamforming, the algorithm returns the result of the Delay Multiply and Sum beamformer with the same sign as the result of the Delay and Sum beamformer would have.
     * **sampleBeamform3D()**: Not implemented - use RxSampleBeamformerDelayMultiplyAndSum.
-
+-->
 
 Acknowledgement
 ----------------
